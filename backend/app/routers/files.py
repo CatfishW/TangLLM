@@ -53,13 +53,27 @@ async def upload_file(
 async def get_file(user_id: int, filename: str, request: Request):
     """Serve an uploaded file with Range support for video streaming."""
     relative_path = f"{user_id}/{filename}"
-    file_path = file_service.get_file_path(relative_path)
+    # Debug path resolution
+    import os
+    print(f"[DEBUG] get_file for: {relative_path}")
+    print(f"[DEBUG] Lookup path: {file_service.upload_dir / relative_path}")
+    resolved_path = file_service.get_file_path(relative_path)
+    print(f"[DEBUG] Resolved path: {resolved_path}")
     
-    if not file_path:
+    if not resolved_path:
+        # Extra debug if failed
+        check_path = file_service.upload_dir / relative_path
+        print(f"[DEBUG] File exists? {check_path.exists()}")
+        print(f"[DEBUG] Is file? {check_path.is_file()}")
+        if check_path.exists():
+             print(f"[DEBUG] File stats: {os.stat(check_path)}")
+             
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="File not found"
+            detail=f"File not found at {check_path}"
         )
+    
+    file_path = resolved_path
     
     # Handle Range header for video seeking
     range_header = request.headers.get("range")
