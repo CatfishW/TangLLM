@@ -5,7 +5,7 @@
 
 class APIClient {
     constructor(baseUrl = '') {
-        this.baseUrl = baseUrl || window.location.origin;
+        this.baseUrl = baseUrl; // Default to empty string for relative paths
         this.token = localStorage.getItem('tangllm_token');
         this.refreshToken = localStorage.getItem('tangllm_refresh_token');
     }
@@ -104,7 +104,7 @@ class APIClient {
     // ============= Auth Endpoints =============
 
     async register(username, email, password, fullName = null) {
-        return this.request('/api/auth/register', {
+        return this.request('api/auth/register', {
             method: 'POST',
             body: JSON.stringify({ username, email, password, full_name: fullName }),
             auth: false
@@ -112,7 +112,7 @@ class APIClient {
     }
 
     async login(username, password) {
-        const data = await this.request('/api/auth/login', {
+        const data = await this.request('api/auth/login', {
             method: 'POST',
             body: JSON.stringify({ username, password }),
             auth: false
@@ -128,7 +128,7 @@ class APIClient {
         }
 
         try {
-            const data = await this.request('/api/auth/refresh', {
+            const data = await this.request('api/auth/refresh', {
                 method: 'POST',
                 body: JSON.stringify({ refresh_token: this.refreshToken }),
                 auth: false
@@ -143,11 +143,11 @@ class APIClient {
     }
 
     async getCurrentUser() {
-        return this.request('/api/auth/me');
+        return this.request('api/auth/me');
     }
 
     async changePassword(currentPassword, newPassword) {
-        return this.request('/api/auth/password', {
+        return this.request('api/auth/password', {
             method: 'PUT',
             body: JSON.stringify({
                 current_password: currentPassword,
@@ -168,7 +168,7 @@ class APIClient {
             return this.sendMessageStream(content, conversationId);
         }
 
-        return this.request('/api/chat', {
+        return this.request('api/chat', {
             method: 'POST',
             body: JSON.stringify({
                 conversation_id: conversationId,
@@ -179,7 +179,7 @@ class APIClient {
     }
 
     async sendMessageStream(content, conversationId = null) {
-        const response = await fetch(`${this.baseUrl}/api/chat`, {
+        const response = await fetch(`${this.baseUrl}api/chat`, {
             method: 'POST',
             headers: this.getHeaders(),
             body: JSON.stringify({
@@ -200,11 +200,11 @@ class APIClient {
     // ============= Conversations Endpoints =============
 
     async getConversations(skip = 0, limit = 50) {
-        return this.request(`/api/conversations?skip=${skip}&limit=${limit}`);
+        return this.request(`api/conversations?skip=${skip}&limit=${limit}`);
     }
 
     async createConversation(title = null, systemPrompt = null) {
-        return this.request('/api/conversations', {
+        return this.request('api/conversations', {
             method: 'POST',
             body: JSON.stringify({
                 title: title,
@@ -214,24 +214,24 @@ class APIClient {
     }
 
     async getConversation(conversationId) {
-        return this.request(`/api/conversations/${conversationId}`);
+        return this.request(`api/conversations/${conversationId}`);
     }
 
     async updateConversation(conversationId, updates) {
-        return this.request(`/api/conversations/${conversationId}`, {
+        return this.request(`api/conversations/${conversationId}`, {
             method: 'PUT',
             body: JSON.stringify(updates)
         });
     }
 
     async deleteConversation(conversationId) {
-        return this.request(`/api/conversations/${conversationId}`, {
+        return this.request(`api/conversations/${conversationId}`, {
             method: 'DELETE'
         });
     }
 
     async branchConversation(conversationId, messageId, newTitle = null) {
-        return this.request(`/api/conversations/${conversationId}/branch`, {
+        return this.request(`api/conversations/${conversationId}/branch`, {
             method: 'POST',
             body: JSON.stringify({
                 message_id: messageId,
@@ -241,11 +241,11 @@ class APIClient {
     }
 
     async exportConversation(conversationId, format = 'markdown') {
-        return this.request(`/api/conversations/${conversationId}/export?format=${format}`);
+        return this.request(`api/conversations/${conversationId}/export?format=${format}`);
     }
 
     async getSharedConversation(shareToken) {
-        return this.request(`/api/conversations/shared/${shareToken}`, { auth: false });
+        return this.request(`api/conversations/shared/${shareToken}`, { auth: false });
     }
 
     // ============= Files Endpoints =============
@@ -254,7 +254,7 @@ class APIClient {
         const formData = new FormData();
         formData.append('file', file);
 
-        const response = await fetch(`${this.baseUrl}/api/files/upload`, {
+        const response = await fetch(`${this.baseUrl}api/files/upload`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${this.token}`
@@ -266,7 +266,7 @@ class APIClient {
     }
 
     async deleteFile(relativePath) {
-        return this.request(`/api/files/${relativePath}`, {
+        return this.request(`api/files/${relativePath}`, {
             method: 'DELETE'
         });
     }
@@ -274,18 +274,18 @@ class APIClient {
     // ============= Settings Endpoints =============
 
     async getSettings() {
-        return this.request('/api/settings');
+        return this.request('api/settings');
     }
 
     async updateSettings(updates) {
-        return this.request('/api/settings', {
+        return this.request('api/settings', {
             method: 'PUT',
             body: JSON.stringify(updates)
         });
     }
 
     async resetSettings() {
-        return this.request('/api/settings/reset', {
+        return this.request('api/settings/reset', {
             method: 'POST'
         });
     }

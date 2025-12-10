@@ -1,27 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="TangLLM - A ChatGPT-like web application with multimodal support powered by Qwen3-VL. Created at Rowan University.">
+    <meta name="description"
+        content="TangLLM - A ChatGPT-like web application with multimodal support powered by Qwen3-VL. Created at Rowan University.">
     <meta name="author" content="Yanlai Wu, Advisor: Ying Tang">
     <meta name="theme-color" content="#5B1400">
-    
+
     <title>TangLLM - Rowan University AI Chat</title>
-    
+
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23FFCE00' stroke-width='2'><path d='M12 2L2 7L12 12L22 7L12 2Z'/><path d='M2 17L12 22L22 17'/><path d='M2 12L12 17L22 12'/></svg>">
-    
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23FFCE00' stroke-width='2'><path d='M12 2L2 7L12 12L22 7L12 2Z'/><path d='M2 17L12 22L22 17'/><path d='M2 12L12 17L22 12'/></svg>">
+
     <!-- Stylesheets -->
-    <link rel="stylesheet" href="/css/design-system.css">
-    <link rel="stylesheet" href="/css/animations.css">
-    <link rel="stylesheet" href="/css/components.css">
-    <link rel="stylesheet" href="/css/pages.css">
-    
+    <link rel="stylesheet" href="css/design-system.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/pages.css">
+
     <!-- Preload fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    
+
     <style>
         /* Initial loading state */
         .initial-loader {
@@ -34,7 +37,7 @@
             background: var(--color-bg-primary);
             z-index: 9999;
         }
-        
+
         .initial-loader .logo {
             width: 80px;
             height: 80px;
@@ -46,7 +49,7 @@
             margin-bottom: var(--space-6);
             animation: pulseGlow 2s ease-in-out infinite;
         }
-        
+
         .initial-loader h1 {
             font-family: var(--font-serif);
             font-size: var(--text-3xl);
@@ -56,12 +59,12 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
-        
+
         .initial-loader p {
             color: var(--color-text-secondary);
             font-size: var(--text-sm);
         }
-        
+
         /* Hide when loaded */
         .loaded .initial-loader {
             opacity: 0;
@@ -70,33 +73,34 @@
         }
     </style>
 </head>
+
 <body>
     <!-- Initial Loading Screen -->
     <div class="initial-loader" id="initial-loader">
         <div class="logo">
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 2L2 7L12 12L22 7L12 2Z"/>
-                <path d="M2 17L12 22L22 17"/>
-                <path d="M2 12L12 17L22 12"/>
+                <path d="M12 2L2 7L12 12L22 7L12 2Z" />
+                <path d="M2 17L12 22L22 17" />
+                <path d="M2 12L12 17L22 12" />
             </svg>
         </div>
         <h1>TangLLM</h1>
         <p>Rowan University AI Chat</p>
         <div class="spinner" style="margin-top: var(--space-8);"></div>
     </div>
-    
+
     <!-- Main Application -->
     <div id="app" class="app"></div>
-    
+
     <!-- Scripts -->
-    <script src="/js/particles.js"></script>
-    <script src="/js/utils.js"></script>
-    <script src="/js/api.js"></script>
-    <script src="/js/auth.js"></script>
-    <script src="/js/chat.js"></script>
-    <script src="/js/settings.js"></script>
-    <script src="/js/app.js"></script>
-    
+    <script src="js/particles.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/chat.js"></script>
+    <script src="js/settings.js"></script>
+    <script src="js/app.js"></script>
+
     <script>
         // Hide initial loader when app is ready
         window.addEventListener('load', () => {
@@ -109,4 +113,5 @@
         });
     </script>
 </body>
+
 </html>
