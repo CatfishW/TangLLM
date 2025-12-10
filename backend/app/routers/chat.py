@@ -1,0 +1,222 @@
+"""
+Chat routes with streaming support.
+"""
+
+from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi.responses import StreamingResponse
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+import json
+import asyncio
+
+from ..database import get_db
+from ..schemas.message import ChatRequest, MessageResponse, ChatResponse
+from ..models.user import User, UserSettings
+from ..models.conversation import Conversation
+from ..models.message import Message
+from ..services.llm_service import LLMService
+from ..services.auth_service import AuthService
+from ..utils.security import get_current_user
+from ..config import settings
+
+
+router = APIRouter(prefix="/api/chat", tags=["Chat"])
+
+
+async def get_llm_service(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+) -> LLMService:
+    """Get LLM service configured with user settings."""
+    auth_service = AuthService(db)
+    user_settings = await auth_service.get_user_settings(current_user.id)
+    
+    return LLMService(
+        api_base=user_settings.api_base_url if user_settings else None,
+        model_id=user_settings.model_id if user_settings else None,
+        api_key=user_settings.api_key if user_settings else None
+    )
+
+
+@router.post("")
+async def send_message(
+    request: Request,
+    chat_request: ChatRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Send a chat message and receive a response (streaming or non-streaming)."""
+    llm_service = await get_llm_service(current_user, db)
+    
+    # Get or create conversation
+    if chat_request.conversation_id:
+        result = await db.execute(
+            select(Conversation).filter(
+                Conversation.id == chat_request.conversation_id,
+                Conversation.user_id == current_user.id
+            )
+        )
+        conversation = result.scalar_one_or_none()
+        if not conversation:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Conversation not found"
+            )
+    else:
+        # Create new conversation
+        conversation = Conversation(
+            user_id=current_user.id,
+            title="New Chat"
+        )
+        db.add(conversation)
+        await db.flush()
+    
+    # Get conversation history
+    result = await db.execute(
+        select(Message).filter(
+            Message.conversation_id == conversation.id
+        ).order_by(Message.created_at)
+    )
+    messages = result.scalars().all()
+    
+    conversation_history = [
+        {
+            "role": msg.role,
+            "content": msg.content,
+            "media_type": msg.media_type,
+            "media_url": msg.media_url
+        }
+        for msg in messages
+    ]
+    
+    # Extract text content and media for user message
+    text_content = ""
+    media_type = None
+    media_url = None
+    
+    for part in chat_request.content:
+        if part.type == "text":
+            text_content = part.text or ""
+        elif part.type in ["image", "video"]:
+            media_type = part.type
+            media_url = part.url
+    
+    # Save user message
+    user_message = Message(
+        conversation_id=conversation.id,
+        role="user",
+        content=text_content,
+        media_type=media_type,
+        media_url=media_url
+    )
+    db.add(user_message)
+    await db.flush()
+    
+    # Get user settings for system prompt and temperature
+    auth_service = AuthService(db)
+    user_settings = await auth_service.get_user_settings(current_user.id)
+    system_prompt = user_settings.system_prompt if user_settings else None
+    temperature = float(user_settings.temperature) if user_settings else 0.7
+    max_tokens = user_settings.max_tokens if user_settings else 4096
+    
+    if chat_request.stream:
+        # Streaming response
+        async def generate():
+            full_response = ""
+            
+            try:
+                async for chunk in llm_service.chat_stream(
+                    conversation_history,
+                    chat_request.content,
+                    system_prompt=system_prompt,
+                    temperature=temperature,
+                    max_tokens=max_tokens
+                ):
+                    full_response += chunk
+                    yield f"data: {json.dumps({'type': 'content', 'content': chunk})}\n\n"
+                    # Force yield to event loop to ensure smoother streaming
+                    await asyncio.sleep(0)
+                
+                # Save assistant message
+                assistant_message = Message(
+                    conversation_id=conversation.id,
+                    role="assistant",
+                    content=full_response,
+                    model_id=llm_service.model_id
+                )
+                db.add(assistant_message)
+                
+                # Update conversation
+                conversation.message_count = len(messages) + 2
+                
+                # Generate title if first message
+                if len(messages) == 0 and text_content:
+                    try:
+                        title = await llm_service.generate_title(text_content)
+                        conversation.title = title
+                    except Exception:
+                        conversation.title = text_content[:50] + "..." if len(text_content) > 50 else text_content
+                
+                await db.commit()
+                
+                yield f"data: {json.dumps({'type': 'done', 'message_id': assistant_message.id, 'conversation_id': conversation.id})}\n\n"
+                
+            except Exception as e:
+                yield f"data: {json.dumps({'type': 'error', 'error': str(e)})}\n\n"
+        
+        return StreamingResponse(
+            generate(),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "X-Accel-Buffering": "no"
+            }
+        )
+    else:
+        # Non-streaming response
+        try:
+            response = await llm_service.chat(
+                conversation_history,
+                chat_request.content,
+                system_prompt=system_prompt,
+                temperature=temperature,
+                max_tokens=max_tokens
+            )
+            
+            # Save assistant message
+            assistant_message = Message(
+                conversation_id=conversation.id,
+                role="assistant",
+                content=response["content"],
+                tokens_used=response["tokens_used"],
+                generation_time=response["generation_time"],
+                model_id=response["model_id"]
+            )
+            db.add(assistant_message)
+            
+            # Update conversation
+            conversation.message_count = len(messages) + 2
+            conversation.total_tokens += response["tokens_used"]
+            
+            # Generate title if first message
+            if len(messages) == 0 and text_content:
+                try:
+                    title = await llm_service.generate_title(text_content)
+                    conversation.title = title
+                except Exception:
+                    conversation.title = text_content[:50] + "..." if len(text_content) > 50 else text_content
+            
+            await db.commit()
+            await db.refresh(assistant_message)
+            
+            return ChatResponse(
+                message=MessageResponse.model_validate(assistant_message),
+                conversation_id=conversation.id
+            )
+            
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=str(e)
+            )
