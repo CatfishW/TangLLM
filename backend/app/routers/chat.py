@@ -84,7 +84,8 @@ async def send_message(
             title="New Chat"
         )
         db.add(conversation)
-        await db.flush()
+        await db.commit()
+        await db.refresh(conversation)
     
     # Get conversation history
     result = await db.execute(
@@ -125,7 +126,8 @@ async def send_message(
         media_url=media_url
     )
     db.add(user_message)
-    await db.flush()
+    await db.commit()
+    await db.refresh(user_message)
     
     # Get user settings for system prompt and temperature
     auth_service = AuthService(db)
