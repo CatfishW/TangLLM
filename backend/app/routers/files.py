@@ -14,7 +14,7 @@ from ..utils.security import get_current_user
 
 router = APIRouter(prefix="/api/files", tags=["Files"])
 
-file_service = FileService()
+# file_service = FileService()  <-- Removed global instance
 
 
 @router.post("/upload")
@@ -25,6 +25,7 @@ async def upload_file(
     db: AsyncSession = Depends(get_db)
 ):
     """Upload an image or video file."""
+    file_service = FileService()
     try:
         relative_path, media_type, metadata = await file_service.upload_file(
             file, 
@@ -52,6 +53,7 @@ async def upload_file(
 @router.get("/{user_id}/{filename}")
 async def get_file(user_id: int, filename: str, request: Request):
     """Serve an uploaded file with Range support for video streaming."""
+    file_service = FileService()
     relative_path = f"{user_id}/{filename}"
     # Debug path resolution
     import os
@@ -140,6 +142,7 @@ async def delete_file(
             detail="You can only delete your own files"
         )
     
+    file_service = FileService()
     relative_path = f"{user_id}/{filename}"
     success = await file_service.delete_file(relative_path)
     
