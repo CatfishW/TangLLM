@@ -56,7 +56,7 @@ class Settings(BaseSettings):
     DEFAULT_MODEL_ID: str = "Qwen/Qwen3-VL-30B-A3B-Instruct-FP8"
     
     # File Upload
-    UPLOAD_DIR: str = "uploads"
+    UPLOAD_DIR: str = os.path.join(_BASE_DIR, "uploads")
     MAX_UPLOAD_SIZE: int = 50 * 512 * 512  # 50MB
     ALLOWED_IMAGE_TYPES: list = ["image/jpeg", "image/png", "image/gif", "image/webp"]
     ALLOWED_VIDEO_TYPES: list = ["video/mp4", "video/webm", "video/quicktime"]
