@@ -58,6 +58,17 @@ async def send_message(
         )
         conversation = result.scalar_one_or_none()
         if not conversation:
+            print(f"[ERROR] Conversation not found! Requested ID: {chat_request.conversation_id}, User ID: {current_user.id}")
+            # Check if conversation exists for ANY user to debug ownership issues
+            verify_result = await db.execute(
+                 select(Conversation).filter(Conversation.id == chat_request.conversation_id)
+            )
+            verify_conv = verify_result.scalar_one_or_none()
+            if verify_conv:
+                print(f"[ERROR] Conversation {chat_request.conversation_id} exists but belongs to User ID: {verify_conv.user_id}")
+            else:
+                print(f"[ERROR] Conversation {chat_request.conversation_id} does not exist in the database.")
+                
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Conversation not found"
