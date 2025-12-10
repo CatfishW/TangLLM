@@ -40,7 +40,10 @@ class Settings(BaseSettings):
     DEBUG: bool = True
     
     # Database
-    DATABASE_URL: str = "sqlite+aiosqlite:///./tangllm.db"
+    # Use absolute path to ensure DB is found regardless of working directory
+    # resolved relative to this config file (backend/app/config.py -> backend/tangllm.db)
+    _BASE_DIR: str = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    DATABASE_URL: str = f"sqlite+aiosqlite:///{os.path.join(_BASE_DIR, 'tangllm.db')}"
     
     # JWT Authentication
     SECRET_KEY: str = Field(default_factory=get_or_create_secret_key)
