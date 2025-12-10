@@ -82,7 +82,25 @@ class SettingsManager {
         }
     }
 
-    async loadModels() {
+    async loadModels(event) {
+        if (event) {
+            event.preventDefault();
+        }
+
+        // Capture current values from inputs before re-rendering
+        const apiBaseInput = document.getElementById('api-base');
+        const currentUrl = apiBaseInput ? apiBaseInput.value.trim() : null;
+
+        if (currentUrl && this.settings && currentUrl !== this.settings.api_base_url) {
+            try {
+                // Silently update settings with the new URL so the backend uses it for fetching models
+                await api.updateSettings({ api_base_url: currentUrl });
+                this.settings.api_base_url = currentUrl;
+            } catch (error) {
+                console.error('Failed to update API URL before fetching models:', error);
+            }
+        }
+
         this.modelsLoading = true;
         // Re-render to show loading state
         const content = document.getElementById('settings-content');
@@ -128,6 +146,7 @@ class SettingsManager {
         } catch (error) {
             console.error('Failed to load models:', error);
             this.availableModels = [];
+            Toast.error('Failed to load models');
         } finally {
             this.modelsLoading = false;
             // Re-render with loaded models
@@ -210,7 +229,7 @@ class SettingsManager {
                 <div class="input-group" style="margin-top: var(--space-4);">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <label class="input-label" for="model-id">Model</label>
-                        <button class="btn btn-ghost btn-sm" onclick="settingsManager.loadModels()" style="font-size: var(--text-xs); padding: 2px 8px;">
+                        <button class="btn btn-ghost btn-sm" onclick="settingsManager.loadModels(event)" style="font-size: var(--text-xs); padding: 2px 8px;">
                             🔄 Refresh
                         </button>
                     </div>
