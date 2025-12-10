@@ -50,8 +50,8 @@ async def upload_file(
 
 
 @router.get("/{user_id}/{filename}")
-async def get_file(user_id: int, filename: str):
-    """Serve an uploaded file."""
+async def get_file(user_id: int, filename: str, request: Request):
+    """Serve an uploaded file with Range support for video streaming."""
     relative_path = f"{user_id}/{filename}"
     file_path = file_service.get_file_path(relative_path)
     
@@ -61,6 +61,55 @@ async def get_file(user_id: int, filename: str):
             detail="File not found"
         )
     
+    # Handle Range header for video seeking
+    range_header = request.headers.get("range")
+    if range_header:
+        import os
+        from fastapi.responses import StreamingResponse
+        
+        file_size = os.path.getsize(file_path)
+        try:
+            start, end = range_header.replace("bytes=", "").split("-")
+            start = int(start)
+            end = int(end) if end else file_size - 1
+        except ValueError:
+            start = 0
+            end = file_size - 1
+            
+        if start >= file_size:
+            # Range not satisfiable
+            raise HTTPException(
+                status_code=status.HTTP_416_REQUESTED_RANGE_NOT_SATISFIABLE,
+                detail="Requested range not satisfiable"
+            )
+            
+        chunk_size = end - start + 1
+        
+        def iterfile():
+            with open(file_path, mode="rb") as file_like:
+                file_like.seek(start)
+                bytes_to_read = chunk_size
+                block_size = 1024 * 64 # 64k chunks
+                while bytes_to_read > 0:
+                    chunk = file_like.read(min(block_size, bytes_to_read))
+                    if not chunk:
+                        break
+                    yield chunk
+                    bytes_to_read -= len(chunk)
+                    
+        headers = {
+            "Content-Range": f"bytes {start}-{end}/{file_size}",
+            "Accept-Ranges": "bytes",
+            "Content-Length": str(chunk_size),
+            "Content-Type": "video/mp4" if str(file_path).endswith(".mp4") else "application/octet-stream",
+        }
+        
+        return StreamingResponse(
+            iterfile(),
+            status_code=status.HTTP_206_PARTIAL_CONTENT,
+            headers=headers,
+        )
+
     return FileResponse(file_path)
 
 
