@@ -16,6 +16,7 @@ from ..models.conversation import Conversation
 from ..models.message import Message
 from ..services.llm_service import LLMService
 from ..services.auth_service import AuthService
+from ..services.annotation_service import AnnotationService
 from ..utils.security import get_current_user
 from ..config import settings
 
@@ -187,6 +188,29 @@ async def send_message(
                 
                 await db.commit()
                 
+                # Check for object detection coordinates and annotate image if present
+                annotation_url = None
+                if media_url and media_type == "image":
+                    annotation_service = AnnotationService()
+                    # Get the actual file path from the media URL
+                    import re
+                    match = re.search(r'/api/files/(\d+)/([^/]+)$', media_url)
+                    if match:
+                        file_user_id = match.group(1)
+                        filename = match.group(2)
+                        file_path = os.path.join(settings.UPLOAD_DIR, file_user_id, filename)
+                        if os.path.exists(file_path):
+                            annotation_url = annotation_service.process_detection_response(
+                                full_response,
+                                file_path,
+                                current_user.id,
+                                filename
+                            )
+                
+                # Send annotation event if we created an annotated image
+                if annotation_url:
+                    yield f"data: {json.dumps({'type': 'annotation', 'url': annotation_url})}\n\n"
+                
                 yield f"data: {json.dumps({'type': 'done', 'message_id': assistant_message.id, 'conversation_id': conversation.id})}\n\n"
                 
             except Exception as e:
@@ -238,10 +262,37 @@ async def send_message(
             await db.commit()
             await db.refresh(assistant_message)
             
-            return ChatResponse(
+            # Check for object detection coordinates and annotate image if present
+            annotation_url = None
+            if media_url and media_type == "image":
+                annotation_service = AnnotationService()
+                # Get the actual file path from the media URL
+                import re as re_module
+                match = re_module.search(r'/api/files/(\d+)/([^/]+)$', media_url)
+                if match:
+                    file_user_id = match.group(1)
+                    filename = match.group(2)
+                    file_path = os.path.join(settings.UPLOAD_DIR, file_user_id, filename)
+                    if os.path.exists(file_path):
+                        annotation_url = annotation_service.process_detection_response(
+                            response["content"],
+                            file_path,
+                            current_user.id,
+                            filename
+                        )
+            
+            result = ChatResponse(
                 message=MessageResponse.model_validate(assistant_message),
                 conversation_id=conversation.id
             )
+            
+            # Add annotation URL to response if present
+            if annotation_url:
+                result_dict = result.model_dump()
+                result_dict["annotation_url"] = annotation_url
+                return result_dict
+            
+            return result
             
         except Exception as e:
             raise HTTPException(

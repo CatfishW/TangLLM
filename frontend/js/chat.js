@@ -142,6 +142,7 @@ class ChatManager {
             let fullResponse = '';
             let messageId = null;
             let conversationId = this.currentConversation?.id;
+            let annotationUrl = null;
 
             // Create assistant message element
             const messageEl = this.addMessageToUI('assistant', '', []);
@@ -215,6 +216,9 @@ class ChatManager {
                                 if (data.type === 'content') {
                                     fullResponse += data.content;
                                     scheduleRender();
+                                } else if (data.type === 'annotation') {
+                                    // Received annotated detection image
+                                    annotationUrl = data.url;
                                 } else if (data.type === 'done') {
                                     messageId = data.message_id;
                                     conversationId = data.conversation_id;
@@ -231,6 +235,23 @@ class ChatManager {
 
             // Final render to ensure all content is displayed
             contentEl.innerHTML = utils.parseMarkdown(fullResponse);
+
+            // Append annotated image if present
+            if (annotationUrl) {
+                const annotationHtml = `
+                    <div class="annotation-result">
+                        <div class="annotation-header">
+                            <span class="annotation-icon">🎯</span>
+                            <span class="annotation-label">Detected Objects</span>
+                        </div>
+                        <div class="annotation-image">
+                            <img src="${annotationUrl}" alt="Annotated detection result" onclick="window.open('${annotationUrl}', '_blank')">
+                        </div>
+                    </div>
+                `;
+                contentEl.innerHTML += annotationHtml;
+            }
+
             this.scrollToBottom();
 
             // Handle any remaining data in buffer

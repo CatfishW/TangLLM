@@ -1,0 +1,23 @@
+{
+    "model": "cyankiwi/GLM-4.6V-AWQ-4bit",
+    "messages": [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": "https://cloudcovert-1305175928.cos.ap-guangzhou.myqcloud.com/%E5%9B%BE%E7%89%87grounding.PNG"
+                    }
+                },
+                {
+                    "type": "text",
+                    "text": "Where is the second bottle of beer from the right on the table? Provide coordinates in [[xmin,ymin,xmax,ymax]] format"
+                }
+            ]
+        }
+    ],
+    "thinking": {
+        "type": "enabled"
+    }
+}

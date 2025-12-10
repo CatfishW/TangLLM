@@ -1,0 +1,10 @@
+{
+    "model": "cyankiwi/GLM-4.6V-AWQ-4bit",
+    "messages": [
+        {
+            "role": "user",
+            "content": "who are you? include your thinking process"
+        }
+    ],
+    "stream": false
+}
