@@ -641,9 +641,9 @@ class ChatManager {
         let mediaHtml = '';
         if (msg.media_url) {
             if (msg.media_type === 'image') {
-                mediaHtml = `<div class="message-media"><img src="${msg.media_url}" alt="Image"></div>`;
+                mediaHtml = `<div class="message-media"><img src="${msg.media_url}" alt="Image" onerror="this.parentElement.innerHTML='<span class=\\'media-error\\'>📷 Image unavailable</span>'"></div>`;
             } else if (msg.media_type === 'video') {
-                mediaHtml = `<div class="message-media"><video src="${msg.media_url}" controls></video></div>`;
+                mediaHtml = `<div class="message-media"><video src="${msg.media_url}" controls onerror="this.parentElement.innerHTML='<span class=\\'media-error\\'>🎬 Video unavailable</span>'"></video></div>`;
             }
         }
 

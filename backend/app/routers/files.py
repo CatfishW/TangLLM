@@ -53,26 +53,43 @@ async def upload_file(
 @router.get("/{user_id}/{filename}")
 async def get_file(user_id: int, filename: str, request: Request):
     """Serve an uploaded file with Range support for video streaming."""
+    import os
+    import glob
+    
     file_service = FileService()
     relative_path = f"{user_id}/{filename}"
+    
     # Debug path resolution
-    import os
     print(f"[DEBUG] get_file for: {relative_path}")
+    print(f"[DEBUG] Upload dir: {file_service.upload_dir}")
     print(f"[DEBUG] Lookup path: {file_service.upload_dir / relative_path}")
+    
     resolved_path = file_service.get_file_path(relative_path)
     print(f"[DEBUG] Resolved path: {resolved_path}")
     
     if not resolved_path:
-        # Extra debug if failed
-        check_path = file_service.upload_dir / relative_path
-        print(f"[DEBUG] File exists? {check_path.exists()}")
-        print(f"[DEBUG] Is file? {check_path.is_file()}")
-        if check_path.exists():
-             print(f"[DEBUG] File stats: {os.stat(check_path)}")
-             
+        # Check the user directory and list all files for debugging
+        user_dir = file_service.upload_dir / str(user_id)
+        
+        # Collect debug info
+        debug_info = {
+            "requested_path": str(file_service.upload_dir / relative_path),
+            "upload_dir_exists": file_service.upload_dir.exists(),
+            "user_dir_exists": user_dir.exists() if user_dir else False,
+            "files_in_user_dir": []
+        }
+        
+        if user_dir.exists():
+            try:
+                debug_info["files_in_user_dir"] = [f.name for f in user_dir.iterdir() if f.is_file()]
+            except Exception as e:
+                debug_info["error_listing_files"] = str(e)
+        
+        print(f"[DEBUG] Debug info: {debug_info}")
+        
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"File not found at {check_path}"
+            detail=f"File not found. Debug: user_dir_exists={debug_info['user_dir_exists']}, files_in_user_dir={debug_info['files_in_user_dir']}"
         )
     
     file_path = resolved_path

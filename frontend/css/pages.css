@@ -523,6 +523,19 @@
     display: block;
 }
 
+.media-error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-4);
+    background: var(--color-bg-tertiary);
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-lg);
+    color: var(--color-text-tertiary);
+    font-size: var(--text-sm);
+    min-height: 80px;
+}
+
 /* Message Actions */
 .message-actions {
     display: flex;
