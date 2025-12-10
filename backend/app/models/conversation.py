@@ -2,7 +2,7 @@
 Conversation database model.
 """
 
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Boolean
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Boolean, Index
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -13,6 +13,12 @@ class Conversation(Base):
     """Conversation/chat session model."""
     
     __tablename__ = "conversations"
+    
+    # Composite index for faster conversation listing by user ordered by recency
+    __table_args__ = (
+        Index('ix_conversations_user_updated', 'user_id', 'updated_at'),
+    )
+
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)

@@ -32,6 +32,22 @@ class LLMService:
             base_url=self.api_base,
             api_key=self.api_key
         )
+    
+    async def list_models(self) -> List[Dict[str, Any]]:
+        """List available models from the LLM API."""
+        try:
+            response = await self.client.models.list()
+            models = []
+            for model in response.data:
+                models.append({
+                    "id": model.id,
+                    "owned_by": getattr(model, "owned_by", "unknown"),
+                    "created": getattr(model, "created", None)
+                })
+            return models
+        except Exception as e:
+            print(f"Error listing models: {e}")
+            return []
 
     def _get_media_content(self, url: str, media_type: str) -> str:
         """

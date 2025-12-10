@@ -2,7 +2,7 @@
 Message database model.
 """
 
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Boolean, JSON
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Boolean, JSON, Index
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -13,6 +13,11 @@ class Message(Base):
     """Chat message model with multimodal support."""
     
     __tablename__ = "messages"
+    
+    # Composite index for faster message retrieval by conversation ordered by time
+    __table_args__ = (
+        Index('ix_messages_conversation_created', 'conversation_id', 'created_at'),
+    )
     
     id = Column(Integer, primary_key=True, index=True)
     conversation_id = Column(Integer, ForeignKey("conversations.id", ondelete="CASCADE"), nullable=False)

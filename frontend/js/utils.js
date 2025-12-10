@@ -231,6 +231,36 @@ function throttle(func, limit = 100) {
 function parseMarkdown(text) {
     if (!text) return '';
 
+    // Extract thinking content before escaping HTML
+    // Match <think>...</think> tags (case insensitive)
+    let thinkingHtml = '';
+    const thinkRegex = /<think>([\s\S]*?)<\/think>/gi;
+    const thinkMatches = text.match(thinkRegex);
+
+    if (thinkMatches) {
+        const thinkingContent = thinkMatches.map(match =>
+            match.replace(/<\/?think>/gi, '').trim()
+        ).join('\n\n');
+
+        if (thinkingContent) {
+            // Create collapsible thinking section
+            const escapedThinking = escapeHtml(thinkingContent);
+            thinkingHtml = `
+                <details class="thinking-toggle">
+                    <summary class="thinking-summary">
+                        <span class="thinking-icon">💭</span>
+                        <span class="thinking-label">Thinking</span>
+                        <span class="thinking-arrow">▶</span>
+                    </summary>
+                    <div class="thinking-content">${escapedThinking.replace(/\n/g, '<br>')}</div>
+                </details>
+            `;
+        }
+
+        // Remove think tags from main content
+        text = text.replace(thinkRegex, '');
+    }
+
     // Escape HTML first
     let html = escapeHtml(text);
 
@@ -288,6 +318,11 @@ function parseMarkdown(text) {
 
     // Merge consecutive blockquotes
     html = html.replace(/<\/blockquote><br><blockquote class="md-blockquote">/g, '<br>');
+
+    // Prepend thinking section if present
+    if (thinkingHtml) {
+        html = thinkingHtml + html;
+    }
 
     return html;
 }

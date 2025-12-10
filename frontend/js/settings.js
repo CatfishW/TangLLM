@@ -6,6 +6,8 @@
 class SettingsManager {
     constructor() {
         this.settings = null;
+        this.availableModels = [];
+        this.modelsLoading = false;
     }
 
     async init() {
@@ -80,12 +82,69 @@ class SettingsManager {
         }
     }
 
+    async loadModels() {
+        this.modelsLoading = true;
+        // Re-render to show loading state
+        const content = document.getElementById('settings-content');
+        if (content) content.innerHTML = this.renderModelTab();
+
+        // Alternate API URLs to try
+        const alternateUrls = [
+            'https://game.agaii.org/mllm/v1',
+            'https://game.agaii.org/llm/v1'
+        ];
+
+        try {
+            let result = await api.getAvailableModels();
+            this.availableModels = result.models || [];
+
+            // If no models found, try alternate URLs
+            if (this.availableModels.length === 0) {
+                const currentUrl = this.settings?.api_base_url || '';
+
+                for (const altUrl of alternateUrls) {
+                    // Skip if it's the same as current
+                    if (altUrl === currentUrl) continue;
+
+                    // Temporarily save and switch to alternate URL
+                    try {
+                        await api.updateSettings({ api_base_url: altUrl });
+                        result = await api.getAvailableModels();
+
+                        if (result.models && result.models.length > 0) {
+                            this.availableModels = result.models;
+                            this.settings.api_base_url = altUrl;
+                            // Update the API base input if visible
+                            const apiBaseInput = document.getElementById('api-base');
+                            if (apiBaseInput) apiBaseInput.value = altUrl;
+                            Toast.info(`Switched to ${altUrl} (found ${this.availableModels.length} models)`);
+                            break;
+                        }
+                    } catch (e) {
+                        console.warn(`Failed to fetch models from ${altUrl}:`, e);
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Failed to load models:', error);
+            this.availableModels = [];
+        } finally {
+            this.modelsLoading = false;
+            // Re-render with loaded models
+            const content = document.getElementById('settings-content');
+            if (content) content.innerHTML = this.renderModelTab();
+        }
+    }
+
     async saveAndClose() {
         const updates = {};
 
         // Gather form values
         const apiBase = document.getElementById('api-base')?.value;
-        const modelId = document.getElementById('model-id')?.value;
+        const modelIdSelect = document.getElementById('model-id')?.value;
+        const modelIdCustom = document.getElementById('model-id-custom')?.value?.trim();
+        // Prefer custom model ID if provided
+        const modelId = modelIdCustom || modelIdSelect;
         const apiKey = document.getElementById('api-key')?.value;
         const systemPrompt = document.getElementById('system-prompt')?.value;
         const temperature = document.getElementById('temperature')?.value;
@@ -149,10 +208,25 @@ class SettingsManager {
                 </div>
                 
                 <div class="input-group" style="margin-top: var(--space-4);">
-                    <label class="input-label" for="model-id">Model ID</label>
-                    <input type="text" id="model-id" class="input" 
-                           value="${this.settings?.model_id || ''}"
-                           placeholder="Qwen/Qwen3-VL-30B-A3B-Instruct-FP8">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <label class="input-label" for="model-id">Model</label>
+                        <button class="btn btn-ghost btn-sm" onclick="settingsManager.loadModels()" style="font-size: var(--text-xs); padding: 2px 8px;">
+                            🔄 Refresh
+                        </button>
+                    </div>
+                    <select id="model-id" class="input" style="width: 100%;">
+                        ${this.modelsLoading ?
+                '<option value="">Loading models...</option>' :
+                this.availableModels.length > 0 ?
+                    this.availableModels.map(m =>
+                        `<option value="${m.id}" ${this.settings?.model_id === m.id ? 'selected' : ''}>${m.id}</option>`
+                    ).join('') :
+                    `<option value="${this.settings?.model_id || ''}">${this.settings?.model_id || 'No models found'}</option>`
+            }
+                    </select>
+                    <input type="text" id="model-id-custom" class="input" style="margin-top: var(--space-2);" 
+                           value=""
+                           placeholder="Or enter custom model ID...">
                 </div>
                 
                 <div class="input-group" style="margin-top: var(--space-4);">
@@ -238,7 +312,8 @@ class SettingsManager {
                 <h4 class="settings-section-title">Keyboard Shortcuts</h4>
                 
                 <div style="font-size: var(--text-sm); color: var(--color-text-secondary);">
-                    <p><kbd>Ctrl</kbd> + <kbd>Enter</kbd> - Send message</p>
+                    <p><kbd>Enter</kbd> - Send message</p>
+                    <p><kbd>Shift</kbd> + <kbd>Enter</kbd> - New line</p>
                     <p><kbd>Ctrl</kbd> + <kbd>N</kbd> - New chat</p>
                     <p><kbd>Ctrl</kbd> + <kbd>,</kbd> - Open settings</p>
                     <p><kbd>Ctrl</kbd> + <kbd>/</kbd> - Show shortcuts</p>

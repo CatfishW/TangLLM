@@ -23,6 +23,17 @@ from ..config import settings
 router = APIRouter(prefix="/api/chat", tags=["Chat"])
 
 
+@router.get("/models")
+async def list_models(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """List available LLM models from the configured API."""
+    llm_service = await get_llm_service(current_user, db)
+    models = await llm_service.list_models()
+    return {"models": models}
+
+
 async def get_llm_service(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)

@@ -146,6 +146,10 @@ class APIClient {
         return this.request('api/auth/me');
     }
 
+    async getAvailableModels() {
+        return this.request('api/chat/models');
+    }
+
     async changePassword(currentPassword, newPassword) {
         return this.request('api/auth/password', {
             method: 'PUT',

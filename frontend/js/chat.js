@@ -690,9 +690,9 @@ class ChatManager {
                         </div>
                         
                         <textarea class="chat-input" id="chat-input" 
-                                  placeholder="Type a message... (Ctrl+Enter to send)"
+                                  placeholder="Type a message... (Enter to send, Shift+Enter for new line)"
                                   rows="1"
-                                  onkeydown="if(event.key === 'Enter' && (event.ctrlKey || event.metaKey)) chatManager.sendMessage()"></textarea>
+                                  onkeydown="if(event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); chatManager.sendMessage(); }"></textarea>
                         
                         <button class="send-btn" id="send-btn" onclick="chatManager.sendMessage()" title="Send">
                             ➤

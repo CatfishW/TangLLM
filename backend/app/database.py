@@ -21,8 +21,16 @@ from sqlalchemy import event
 @event.listens_for(engine.sync_engine, "connect")
 def set_sqlite_pragma(dbapi_connection, connection_record):
     cursor = dbapi_connection.cursor()
+    # WAL mode for better concurrency
     cursor.execute("PRAGMA journal_mode=WAL")
+    # NORMAL synchronous is safe with WAL and faster than FULL
+    cursor.execute("PRAGMA synchronous=NORMAL")
+    # 8MB cache size for better read performance
+    cursor.execute("PRAGMA cache_size=-8000")
+    # Store temp tables in memory
+    cursor.execute("PRAGMA temp_store=MEMORY")
     cursor.close()
+
 
 # Create async session factory
 AsyncSessionLocal = async_sessionmaker(
