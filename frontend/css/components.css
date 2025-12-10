@@ -621,3 +621,7 @@
         transform: translateY(0);
     }
 }
+
+body.hide-thinking .thinking-toggle {
+    display: none !important;
+}

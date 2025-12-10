@@ -233,32 +233,50 @@ function parseMarkdown(text) {
 
     // Extract thinking content before escaping HTML
     // Match <think>...</think> tags (case insensitive)
+    // Extract thinking content before escaping HTML
     let thinkingHtml = '';
-    const thinkRegex = /<think>([\s\S]*?)<\/think>/gi;
-    const thinkMatches = text.match(thinkRegex);
 
-    if (thinkMatches) {
-        const thinkingContent = thinkMatches.map(match =>
-            match.replace(/<\/?think>/gi, '').trim()
-        ).join('\n\n');
+    // Improved regex to handle attributes and robust matching
+    // Also handle case where </think> is missing (streaming)
+    const thinkStartRegex = /<think(?:\s[^>]*)?>/i;
+    const thinkEndRegex = /<\/think>/i;
 
-        if (thinkingContent) {
-            // Create collapsible thinking section
-            const escapedThinking = escapeHtml(thinkingContent);
+    if (thinkStartRegex.test(text)) {
+        let content = '';
+        let mainText = '';
+
+        const startMatch = text.match(thinkStartRegex);
+        const startIndex = startMatch.index;
+        const afterStart = text.slice(startIndex + startMatch[0].length);
+
+        const endMatch = afterStart.match(thinkEndRegex);
+
+        if (endMatch) {
+            // Complete block
+            content = afterStart.slice(0, endMatch.index);
+            mainText = text.slice(0, startIndex) + afterStart.slice(endMatch.index + endMatch[0].length);
+        } else {
+            // Incomplete block (streaming) - treat everything after start as thinking
+            content = afterStart;
+            mainText = text.slice(0, startIndex);
+        }
+
+        if (content) {
+            const escapedThinking = escapeHtml(content);
             thinkingHtml = `
-                <details class="thinking-toggle">
+                <details class="thinking-toggle" open>
                     <summary class="thinking-summary">
                         <span class="thinking-icon">💭</span>
-                        <span class="thinking-label">Thinking</span>
+                        <span class="thinking-label">Thinking Process</span>
                         <span class="thinking-arrow">▶</span>
                     </summary>
                     <div class="thinking-content">${escapedThinking.replace(/\n/g, '<br>')}</div>
                 </details>
             `;
-        }
 
-        // Remove think tags from main content
-        text = text.replace(thinkRegex, '');
+            // Only update text if we found a think block
+            text = mainText;
+        }
     }
 
     // Escape HTML first

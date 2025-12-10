@@ -13,6 +13,16 @@ class SettingsManager {
     async init() {
         try {
             this.settings = await api.getSettings();
+
+            // Apply settings on load
+            if (this.settings) {
+                if (this.settings.theme) {
+                    document.body.setAttribute('data-theme', this.settings.theme);
+                }
+                if (this.settings.show_thinking !== undefined) {
+                    document.body.classList.toggle('hide-thinking', this.settings.show_thinking === false);
+                }
+            }
         } catch (error) {
             console.error('Failed to load settings:', error);
         }
@@ -171,6 +181,7 @@ class SettingsManager {
         const theme = document.getElementById('theme')?.value;
         const enableVoice = document.getElementById('enable-voice')?.checked;
         const enableSounds = document.getElementById('enable-sounds')?.checked;
+        const showThinking = document.getElementById('show-thinking')?.checked;
 
         if (apiBase !== undefined) updates.api_base_url = apiBase;
         if (modelId !== undefined) updates.model_id = modelId;
@@ -181,6 +192,7 @@ class SettingsManager {
         if (theme !== undefined) updates.theme = theme;
         if (enableVoice !== undefined) updates.enable_voice = enableVoice;
         if (enableSounds !== undefined) updates.enable_sounds = enableSounds;
+        if (showThinking !== undefined) updates.show_thinking = showThinking;
 
         await this.updateSettings(updates);
         this.closeSettings();
@@ -188,6 +200,11 @@ class SettingsManager {
         // Apply theme
         if (updates.theme) {
             document.body.setAttribute('data-theme', updates.theme);
+        }
+
+        // Apply thinking toggle
+        if (updates.show_thinking !== undefined) {
+            document.body.classList.toggle('hide-thinking', updates.show_thinking === false);
         }
     }
 
@@ -322,6 +339,17 @@ class SettingsManager {
                     </div>
                     <label class="toggle">
                         <input type="checkbox" id="enable-sounds" ${this.settings?.enable_sounds ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div class="settings-row">
+                    <div>
+                        <div class="settings-label">Show Thinking Process</div>
+                        <div class="settings-description">Display the AI's internal reasoning steps</div>
+                    </div>
+                    <label class="toggle">
+                        <input type="checkbox" id="show-thinking" ${this.settings?.show_thinking !== false ? 'checked' : ''}>
                         <span class="toggle-slider"></span>
                     </label>
                 </div>
