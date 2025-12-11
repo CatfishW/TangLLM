@@ -51,8 +51,6 @@ class UserSettings(Base):
     theme = Column(String(20), default="dark")
     enable_voice = Column(Boolean, default=True)
     enable_sounds = Column(Boolean, default=True)
-    show_thinking = Column(Boolean, default=True)
-    thinking_mode = Column(String(20), default="auto")  # auto, fast, thinking
     
     # Relationships
     user = relationship("User", back_populates="settings")

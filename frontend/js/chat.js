@@ -773,8 +773,8 @@ class ChatManager {
                 ${this.renderChatInput()}
             `;
         } else {
-            // Chat view
-            const thinkingMode = settingsManager.settings?.thinking_mode || 'auto';
+            // Chat view - get thinking mode from localStorage
+            const thinkingMode = localStorage.getItem('thinkingMode') || 'auto';
             chatContainer.innerHTML = `
                 <div class="chat-header">
                     <div class="chat-header-left">
@@ -918,16 +918,14 @@ class ChatManager {
         }
     }
 
-    async setThinkingMode(mode) {
-        try {
-            await api.updateSettings({ thinking_mode: mode });
-            settingsManager.settings.thinking_mode = mode;
+    setThinkingMode(mode) {
+        localStorage.setItem('thinkingMode', mode);
+        const modeNames = { auto: 'Auto', fast: 'Fast', thinking: 'Thinking' };
+        Toast.success(`Switched to TangLLM ${modeNames[mode]}`);
+    }
 
-            const modeNames = { auto: 'Auto', fast: 'Fast', thinking: 'Thinking' };
-            Toast.success(`Switched to TangLLM ${modeNames[mode]}`);
-        } catch (error) {
-            Toast.error('Failed to update thinking mode');
-        }
+    getThinkingMode() {
+        return localStorage.getItem('thinkingMode') || 'auto';
     }
 }
 
