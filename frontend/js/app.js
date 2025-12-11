@@ -102,6 +102,9 @@ async function renderApp() {
 
     // Setup drag and drop for files
     setupDragDrop();
+
+    // Setup clipboard paste for images
+    setupClipboardPaste();
 }
 
 // ============= UI Helpers =============
@@ -165,6 +168,42 @@ function setupDragDrop() {
 
         if (files.length > 0) {
             await chatManager.handleFileUpload(files);
+        }
+    });
+}
+
+function setupClipboardPaste() {
+    // Listen for paste events on the document
+    document.addEventListener('paste', async (e) => {
+        // Check if we have clipboard data with items
+        const clipboardData = e.clipboardData || window.clipboardData;
+        if (!clipboardData || !clipboardData.items) return;
+
+        const items = Array.from(clipboardData.items);
+        const imageItems = items.filter(item => item.type.startsWith('image/'));
+
+        if (imageItems.length === 0) return;
+
+        // Prevent default paste behavior for images
+        e.preventDefault();
+
+        // Convert clipboard items to files
+        const files = [];
+        for (const item of imageItems) {
+            const file = item.getAsFile();
+            if (file) {
+                // Create a new file with a proper name
+                const extension = file.type.split('/')[1] || 'png';
+                const newFile = new File([file], `pasted_image_${Date.now()}.${extension}`, {
+                    type: file.type
+                });
+                files.push(newFile);
+            }
+        }
+
+        if (files.length > 0) {
+            await chatManager.handleFileUpload(files);
+            Toast.success(`Pasted ${files.length} image(s) from clipboard`);
         }
     });
 }
