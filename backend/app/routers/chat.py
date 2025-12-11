@@ -119,23 +119,34 @@ async def send_message(
     
     # Extract text content and media for user message
     text_content = ""
-    media_type = None
-    media_url = None
+    current_media_type = None
+    current_media_url = None
     
     for part in chat_request.content:
         if part.type == "text":
             text_content = part.text or ""
         elif part.type in ["image", "video"]:
-            media_type = part.type
-            media_url = part.url
+            current_media_type = part.type
+            current_media_url = part.url
     
-    # Save user message
+    # For annotation: use current image or fall back to recent image from history
+    annotation_media_type = current_media_type
+    annotation_media_url = current_media_url
+    
+    if not annotation_media_url:
+        for msg in reversed(conversation_history):
+            if msg.get("media_type") == "image" and msg.get("media_url"):
+                annotation_media_type = "image"
+                annotation_media_url = msg["media_url"]
+                break
+    
+    # Save user message with ONLY its own content (not inherited media)
     user_message = Message(
         conversation_id=conversation.id,
         role="user",
         content=text_content,
-        media_type=media_type,
-        media_url=media_url
+        media_type=current_media_type,
+        media_url=current_media_url
     )
     db.add(user_message)
     await db.commit()
@@ -190,10 +201,10 @@ async def send_message(
                 
                 # Check for object detection coordinates and annotate image if present
                 annotation_url = None
-                if media_url and media_type == "image":
+                if annotation_media_url and annotation_media_type == "image":
                     annotation_service = AnnotationService()
                     # Get the actual file path from the media URL
-                    match = re.search(r'/api/files/(\d+)/([^/]+)$', media_url)
+                    match = re.search(r'/api/files/(\d+)/([^/]+)$', annotation_media_url)
                     if match:
                         file_user_id = match.group(1)
                         filename = match.group(2)
@@ -264,10 +275,10 @@ async def send_message(
             
             # Check for object detection coordinates and annotate image if present
             annotation_url = None
-            if media_url and media_type == "image":
+            if annotation_media_url and annotation_media_type == "image":
                 annotation_service = AnnotationService()
                 # Get the actual file path from the media URL
-                match = re.search(r'/api/files/(\d+)/([^/]+)$', media_url)
+                match = re.search(r'/api/files/(\d+)/([^/]+)$', annotation_media_url)
                 if match:
                     file_user_id = match.group(1)
                     filename = match.group(2)
