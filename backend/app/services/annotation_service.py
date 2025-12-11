@@ -172,10 +172,25 @@ class AnnotationService:
         """
         # Open image from file or URL
         if image_source.startswith('http'):
-            # Download image from URL
-            response = requests.get(image_source, timeout=30)
-            response.raise_for_status()
-            image = Image.open(io.BytesIO(response.content))
+            # Check if this is a local server URL (same server API files)
+            # Convert /api/files/user_id/filename to local path
+            api_match = re.search(r'/api/files/(\d+)/([^/?]+)', image_source)
+            if api_match:
+                # It's a local API file URL - read directly from disk
+                user_id = api_match.group(1)
+                filename = api_match.group(2)
+                local_path = os.path.join(settings.UPLOAD_DIR, user_id, filename)
+                print(f"[DEBUG ANNOTATION] Converting API URL to local path: {local_path}")
+                if os.path.exists(local_path):
+                    image = Image.open(local_path)
+                else:
+                    raise FileNotFoundError(f"Local file not found: {local_path}")
+            else:
+                # External URL - download with longer timeout
+                print(f"[DEBUG ANNOTATION] Downloading external image: {image_source}")
+                response = requests.get(image_source, timeout=60)
+                response.raise_for_status()
+                image = Image.open(io.BytesIO(response.content))
         else:
             image = Image.open(image_source)
         
