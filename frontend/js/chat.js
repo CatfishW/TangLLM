@@ -334,6 +334,9 @@ class ChatManager {
 
             this.scrollToBottom();
 
+            // Hide typing indicator after generation completes
+            this.hideTypingIndicator();
+
             // Handle any remaining data in buffer
             if (buffer.trim()) {
                 const lines = buffer.split('\n');
