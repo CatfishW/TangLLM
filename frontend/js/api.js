@@ -264,13 +264,25 @@ class APIClient {
         const formData = new FormData();
         formData.append('file', file);
 
-        const response = await fetch(`${this.baseUrl}api/files/upload`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${this.token}`
-            },
-            body: formData
-        });
+        const doUpload = async () => {
+            return await fetch(`${this.baseUrl}api/files/upload`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${this.token}`
+                },
+                body: formData
+            });
+        };
+
+        let response = await doUpload();
+
+        // Handle 401 - try to refresh token
+        if (response.status === 401 && this.refreshToken) {
+            const refreshed = await this.refreshTokens();
+            if (refreshed) {
+                response = await doUpload();
+            }
+        }
 
         return this.handleResponse(response);
     }
