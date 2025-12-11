@@ -72,8 +72,6 @@ async def send_message(
         )
         conversation = result.scalar_one_or_none()
         if not conversation:
-            import os
-            from ..config import settings
             print(f"[ERROR] [PID:{os.getpid()}] Conversation not found! Requested ID: {chat_request.conversation_id}, User ID: {current_user.id}")
             print(f"[ERROR] [PID:{os.getpid()}] Database URL: {settings.DATABASE_URL}")
             
