@@ -774,9 +774,19 @@ class ChatManager {
             `;
         } else {
             // Chat view
+            const thinkingMode = settingsManager.settings?.thinking_mode || 'auto';
             chatContainer.innerHTML = `
                 <div class="chat-header">
-                    <h2 class="chat-title">${utils.escapeHtml(this.currentConversation.title)}</h2>
+                    <div class="chat-header-left">
+                        <div class="thinking-mode-selector">
+                            <select id="thinking-mode" class="thinking-mode-dropdown" onchange="chatManager.setThinkingMode(this.value)">
+                                <option value="auto" ${thinkingMode === 'auto' ? 'selected' : ''}>🤖 TangLLM Auto</option>
+                                <option value="fast" ${thinkingMode === 'fast' ? 'selected' : ''}>⚡ TangLLM Fast</option>
+                                <option value="thinking" ${thinkingMode === 'thinking' ? 'selected' : ''}>🧠 TangLLM Thinking</option>
+                            </select>
+                        </div>
+                        <h2 class="chat-title" id="chat-title">${utils.escapeHtml(this.currentConversation.title)}</h2>
+                    </div>
                     <div class="chat-actions">
                         <button class="btn btn-ghost btn-icon" onclick="chatManager.exportConversation('markdown')" title="Export">
                             📥
@@ -905,6 +915,18 @@ class ChatManager {
         if (input) {
             input.value = text;
             input.focus();
+        }
+    }
+
+    async setThinkingMode(mode) {
+        try {
+            await api.updateSettings({ thinking_mode: mode });
+            settingsManager.settings.thinking_mode = mode;
+
+            const modeNames = { auto: 'Auto', fast: 'Fast', thinking: 'Thinking' };
+            Toast.success(`Switched to TangLLM ${modeNames[mode]}`);
+        } catch (error) {
+            Toast.error('Failed to update thinking mode');
         }
     }
 }

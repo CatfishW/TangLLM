@@ -295,6 +295,50 @@
     border-bottom: 1px solid var(--color-border);
 }
 
+.chat-header-left {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+}
+
+.thinking-mode-selector {
+    position: relative;
+}
+
+.thinking-mode-dropdown {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+    color: var(--color-primary-contrast);
+    border: none;
+    border-radius: var(--radius-md);
+    padding: var(--space-2) var(--space-4);
+    font-size: var(--text-sm);
+    font-weight: var(--font-semibold);
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: var(--space-8);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    transition: all var(--transition-fast);
+}
+
+.thinking-mode-dropdown:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
+
+.thinking-mode-dropdown:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.3);
+}
+
+.thinking-mode-dropdown option {
+    background: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+    padding: var(--space-2);
+}
+
 .chat-title {
     font-size: var(--text-lg);
     font-weight: var(--font-semibold);
