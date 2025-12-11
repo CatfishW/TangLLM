@@ -198,22 +198,45 @@ class LLMService:
                 stream=True
             )
             
+            in_thinking = False
             async for chunk in stream:
-                if chunk.choices and chunk.choices[0].delta.content:
-                    content = chunk.choices[0].delta.content
+                if chunk.choices:
+                    delta = chunk.choices[0].delta
                     
-                    # Adjusted smoothing logic
-                    # 1. Consistent chunk size (3 chars) to avoid fast/slow alternation
-                    # 2. Use asyncio.sleep(0) instead of 0.01 to avoid 15ms/tick penalty on Windows
-                    #    This prevents "lag" (backlog accumulation) while still breaking up bursts
-                    if len(content) > 3:
-                        for i in range(0, len(content), 3):
-                            yield content[i:i+3]
-                            await asyncio.sleep(0.0165)
-                    else:
-                        yield content
-                        # Tiny yield to maintain consistent event loop rhythm
-                        await asyncio.sleep(0)
+                    # Check for reasoning content (GLM thinking mode)
+                    reasoning_content = getattr(delta, 'reasoning_content', None)
+                    if reasoning_content:
+                        # Start thinking section if not already in it
+                        if not in_thinking:
+                            yield "<think>"
+                            in_thinking = True
+                        yield reasoning_content
+                    
+                    # Regular content
+                    if delta.content:
+                        # End thinking section if we were in it
+                        if in_thinking:
+                            yield "</think>"
+                            in_thinking = False
+                        
+                        content = delta.content
+                        
+                        # Adjusted smoothing logic
+                        # 1. Consistent chunk size (3 chars) to avoid fast/slow alternation
+                        # 2. Use asyncio.sleep(0) instead of 0.01 to avoid 15ms/tick penalty on Windows
+                        #    This prevents "lag" (backlog accumulation) while still breaking up bursts
+                        if len(content) > 3:
+                            for i in range(0, len(content), 3):
+                                yield content[i:i+3]
+                                await asyncio.sleep(0.0165)
+                        else:
+                            yield content
+                            # Tiny yield to maintain consistent event loop rhythm
+                            await asyncio.sleep(0)
+            
+            # Close thinking tag if stream ended while still thinking
+            if in_thinking:
+                yield "</think>"
                     
         except Exception as e:
             yield f"\n\n[Error: {str(e)}]"
