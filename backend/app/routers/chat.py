@@ -234,7 +234,7 @@ async def send_message(
                 if annotation_url:
                     yield f"data: {json.dumps({'type': 'annotation', 'url': annotation_url})}\n\n"
                 
-                yield f"data: {json.dumps({'type': 'done', 'message_id': assistant_message.id, 'conversation_id': conversation.id})}\n\n"
+                yield f"data: {json.dumps({'type': 'done', 'message_id': assistant_message.id, 'conversation_id': conversation.id, 'title': conversation.title})}\n\n"
                 
             except Exception as e:
                 yield f"data: {json.dumps({'type': 'error', 'error': str(e)})}\n\n"

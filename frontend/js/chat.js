@@ -296,6 +296,10 @@ class ChatManager {
                                 } else if (data.type === 'done') {
                                     messageId = data.message_id;
                                     conversationId = data.conversation_id;
+                                    // Update conversation title in sidebar if we got a new one
+                                    if (data.title && this.currentConversationId) {
+                                        this.updateConversationTitle(this.currentConversationId, data.title);
+                                    }
                                 } else if (data.type === 'error') {
                                     Toast.error(data.error);
                                 }
@@ -480,6 +484,35 @@ class ChatManager {
     hideTypingIndicator() {
         const indicator = document.getElementById('typing-indicator');
         if (indicator) indicator.remove();
+    }
+
+    updateConversationTitle(conversationId, newTitle) {
+        // Update in the conversations array
+        const conv = this.conversations.find(c => c.id === conversationId);
+        if (conv) {
+            conv.title = newTitle;
+        }
+
+        // Update the sidebar item
+        const sidebarItems = document.querySelectorAll('.conversation-item');
+        sidebarItems.forEach(item => {
+            const onclick = item.getAttribute('onclick');
+            if (onclick && onclick.includes(`selectConversation(${conversationId})`)) {
+                const titleEl = item.querySelector('.conversation-item-title');
+                if (titleEl) {
+                    titleEl.textContent = newTitle;
+                }
+            }
+        });
+
+        // Update the chat header if this is the current conversation
+        if (this.currentConversation?.id === conversationId) {
+            this.currentConversation.title = newTitle;
+            const chatTitle = document.getElementById('chat-title');
+            if (chatTitle) {
+                chatTitle.textContent = newTitle;
+            }
+        }
     }
 
     scrollToBottom() {
