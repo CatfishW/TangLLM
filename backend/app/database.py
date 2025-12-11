@@ -25,10 +25,16 @@ def set_sqlite_pragma(dbapi_connection, connection_record):
     cursor.execute("PRAGMA journal_mode=WAL")
     # NORMAL synchronous is safe with WAL and faster than FULL
     cursor.execute("PRAGMA synchronous=NORMAL")
-    # 8MB cache size for better read performance
-    cursor.execute("PRAGMA cache_size=-8000")
+    # 32MB cache size for better read performance
+    cursor.execute("PRAGMA cache_size=-32000")
     # Store temp tables in memory
     cursor.execute("PRAGMA temp_store=MEMORY")
+    # Memory-map up to 512MB for faster reads
+    cursor.execute("PRAGMA mmap_size=536870912")
+    # Busy timeout - wait up to 5 seconds
+    cursor.execute("PRAGMA busy_timeout=5000")
+    # Enable query result caching
+    cursor.execute("PRAGMA cache_spill=false")
     cursor.close()
 
 

@@ -846,6 +846,7 @@ class ChatManager {
                                 </div>
                             </div>
                         </div>
+                        <h2 class="chat-title" id="chat-title">${utils.escapeHtml(this.currentConversation.title || 'New Chat')}</h2>
                     </div>
                     <div class="chat-actions">
                         <button class="btn btn-ghost btn-icon" onclick="chatManager.exportConversation('markdown')" title="Export">

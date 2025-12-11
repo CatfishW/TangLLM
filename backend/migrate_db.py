@@ -51,6 +51,35 @@ def migrate():
             else:
                 print(f"  ✓ Column {column_name} already exists")
         
+        # Create indexes for better performance
+        indexes = [
+            ("ix_messages_conversation_created", "messages", "conversation_id, created_at"),
+            ("ix_conversations_user_updated", "conversations", "user_id, updated_at DESC"),
+            ("ix_user_settings_user_id", "user_settings", "user_id"),
+        ]
+        
+        print("\n📊 Checking indexes...")
+        for idx_name, table_name, columns in indexes:
+            cursor.execute(f"SELECT name FROM sqlite_master WHERE type='index' AND name='{idx_name}'")
+            if not cursor.fetchone():
+                try:
+                    cursor.execute(f"CREATE INDEX IF NOT EXISTS {idx_name} ON {table_name} ({columns})")
+                    print(f"  ✓ Created index {idx_name}")
+                except Exception as e:
+                    print(f"  ⚠ Could not create {idx_name}: {e}")
+            else:
+                print(f"  ✓ Index {idx_name} already exists")
+        
+        # Apply SQLite performance optimizations
+        print("\n⚡ Applying SQLite optimizations...")
+        cursor.execute("PRAGMA journal_mode=WAL")
+        cursor.execute("PRAGMA synchronous=NORMAL")
+        cursor.execute("PRAGMA cache_size=-32000")
+        cursor.execute("PRAGMA temp_store=MEMORY")
+        cursor.execute("PRAGMA mmap_size=536870912")
+        cursor.execute("PRAGMA optimize")
+        print("  ✓ WAL mode, 32MB cache, mmap enabled")
+        
         conn.commit()
         print("\n✅ Migration completed successfully!")
         

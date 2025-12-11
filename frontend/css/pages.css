@@ -869,8 +869,7 @@
 .welcome-mode-selector {
     position: absolute;
     top: var(--space-4);
-    left: 50%;
-    transform: translateX(-50%);
+    left: var(--space-4);
 }
 
 .welcome-logo {
