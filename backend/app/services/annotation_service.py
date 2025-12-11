@@ -50,11 +50,15 @@ class AnnotationService:
         
         Returns list of (xmin, ymin, xmax, ymax) tuples, or None if no coordinates found.
         """
+        # Strip thinking content first - don't parse coordinates from model's internal reasoning
+        # Remove everything between <think> and </think> tags
+        clean_text = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL | re.IGNORECASE)
+        
         # Pattern to match individual coordinate boxes: [num,num,num,num]
         # This pattern finds all boxes regardless of outer array structure
         pattern = r'\[\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\]'
         
-        matches = re.findall(pattern, text)
+        matches = re.findall(pattern, clean_text)
         
         if not matches:
             return None
@@ -308,10 +312,14 @@ class AnnotationService:
         Returns:
             URL to annotated image, or None if no coordinates found
         """
-        # Parse coordinates
+    # Parse coordinates
         coordinates = self.parse_coordinates(response_text)
         
+        print(f"[DEBUG ANNOTATION] Response text (first 500 chars): {response_text[:500]}")
+        print(f"[DEBUG ANNOTATION] Parsed coordinates: {coordinates}")
+        
         if not coordinates:
+            print(f"[DEBUG ANNOTATION] No coordinates found in response")
             return None
         
         try:
