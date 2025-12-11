@@ -6,6 +6,8 @@ Parses coordinates from LLM responses and draws bounding boxes on images.
 import re
 import os
 import uuid
+import io
+import requests
 from typing import List, Tuple, Optional
 from PIL import Image, ImageDraw, ImageFont
 
@@ -145,7 +147,7 @@ class AnnotationService:
     
     def annotate_image(
         self,
-        image_path: str,
+        image_source: str,
         coordinates: List[Tuple[int, int, int, int]],
         colors: Optional[List[Tuple[int, int, int]]] = None,
         labels: Optional[List[str]] = None,
@@ -155,7 +157,7 @@ class AnnotationService:
         Draw bounding boxes on an image.
         
         Args:
-            image_path: Path to the source image
+            image_source: Path to the source image OR URL to download from
             coordinates: List of (xmin, ymin, xmax, ymax) tuples
             colors: Optional list of RGB color tuples for each box
             labels: Optional labels for each bounding box
@@ -164,8 +166,14 @@ class AnnotationService:
         Returns:
             Annotated PIL Image
         """
-        # Open image
-        image = Image.open(image_path)
+        # Open image from file or URL
+        if image_source.startswith('http'):
+            # Download image from URL
+            response = requests.get(image_source, timeout=30)
+            response.raise_for_status()
+            image = Image.open(io.BytesIO(response.content))
+        else:
+            image = Image.open(image_source)
         
         # Convert to RGB if necessary (for saving as JPEG)
         if image.mode in ('RGBA', 'P'):

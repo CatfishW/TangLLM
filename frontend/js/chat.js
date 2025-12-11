@@ -103,16 +103,59 @@ class ChatManager {
             });
         }
 
-        // Add text
+        // Detect and extract URLs from text (for images and videos)
+        let textWithoutUrls = text;
         if (text) {
+            // Regex to match URLs
+            const urlRegex = /(https?:\/\/[^\s<>"{}|\\^`\[\]]+)/gi;
+            const imageExtensions = /\.(jpg|jpeg|png|gif|webp|bmp|svg)(\?.*)?$/i;
+            const videoExtensions = /\.(mp4|webm|ogg|mov|avi|mkv)(\?.*)?$/i;
+
+            const urls = text.match(urlRegex) || [];
+
+            for (const url of urls) {
+                if (imageExtensions.test(url)) {
+                    content.push({
+                        type: 'image',
+                        url: url
+                    });
+                    // Remove URL from text to avoid duplication
+                    textWithoutUrls = textWithoutUrls.replace(url, '').trim();
+                } else if (videoExtensions.test(url)) {
+                    content.push({
+                        type: 'video',
+                        url: url
+                    });
+                    textWithoutUrls = textWithoutUrls.replace(url, '').trim();
+                }
+            }
+        }
+
+        // Add remaining text (after removing extracted URLs)
+        if (textWithoutUrls) {
             content.push({
                 type: 'text',
-                text: text
+                text: textWithoutUrls
             });
         }
 
-        // Save files for UI before clearing
+        // Save files for UI before clearing (includes detected URL media)
         const filesForUI = [...this.uploadedFiles];
+
+        // Add URL-detected media to files for UI display
+        for (const item of content) {
+            if ((item.type === 'image' || item.type === 'video') &&
+                item.url && item.url.startsWith('http') &&
+                !filesForUI.some(f => f.url === item.url)) {
+                filesForUI.push({
+                    type: item.type,
+                    url: item.url,
+                    preview: item.url,
+                    name: 'URL Media'
+                });
+            }
+        }
+
         this.uploadedFiles = [];
 
         // If we're on the welcome screen (no chat-messages container), switch to chat view first
@@ -126,7 +169,7 @@ class ChatManager {
         this.renderFilePreview();
 
         // Add user message to UI
-        this.addMessageToUI('user', text, filesForUI);
+        this.addMessageToUI('user', textWithoutUrls || text, filesForUI);
 
         // Show typing indicator
         this.showTypingIndicator();

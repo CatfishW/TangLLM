@@ -203,20 +203,32 @@ async def send_message(
                 annotation_url = None
                 if annotation_media_url and annotation_media_type == "image":
                     annotation_service = AnnotationService()
-                    # Get the actual file path from the media URL
-                    match = re.search(r'/api/files/(\d+)/([^/]+)$', annotation_media_url)
-                    if match:
-                        file_user_id = match.group(1)
-                        filename = match.group(2)
-                        file_path = os.path.join(settings.UPLOAD_DIR, file_user_id, filename)
-                        if os.path.exists(file_path):
-                            annotation_url = annotation_service.process_detection_response(
-                                full_response,
-                                file_path,
-                                current_user.id,
-                                filename,
-                                user_prompt=text_content
-                            )
+                    
+                    # Check if it's a local file or external URL
+                    if annotation_media_url.startswith('/api/files/'):
+                        # Local file - get path from URL
+                        match = re.search(r'/api/files/(\d+)/([^/]+)$', annotation_media_url)
+                        if match:
+                            file_user_id = match.group(1)
+                            filename = match.group(2)
+                            file_path = os.path.join(settings.UPLOAD_DIR, file_user_id, filename)
+                            if os.path.exists(file_path):
+                                annotation_url = annotation_service.process_detection_response(
+                                    full_response,
+                                    file_path,
+                                    current_user.id,
+                                    filename,
+                                    user_prompt=text_content
+                                )
+                    elif annotation_media_url.startswith('http'):
+                        # External URL - pass URL directly to annotation service
+                        annotation_url = annotation_service.process_detection_response(
+                            full_response,
+                            annotation_media_url,  # Pass URL as image source
+                            current_user.id,
+                            "url_image.jpg",
+                            user_prompt=text_content
+                        )
                 
                 # Send annotation event if we created an annotated image
                 if annotation_url:
@@ -277,20 +289,32 @@ async def send_message(
             annotation_url = None
             if annotation_media_url and annotation_media_type == "image":
                 annotation_service = AnnotationService()
-                # Get the actual file path from the media URL
-                match = re.search(r'/api/files/(\d+)/([^/]+)$', annotation_media_url)
-                if match:
-                    file_user_id = match.group(1)
-                    filename = match.group(2)
-                    file_path = os.path.join(settings.UPLOAD_DIR, file_user_id, filename)
-                    if os.path.exists(file_path):
-                        annotation_url = annotation_service.process_detection_response(
-                            response["content"],
-                            file_path,
-                            current_user.id,
-                            filename,
-                            user_prompt=text_content
-                        )
+                
+                # Check if it's a local file or external URL
+                if annotation_media_url.startswith('/api/files/'):
+                    # Local file - get path from URL
+                    match = re.search(r'/api/files/(\d+)/([^/]+)$', annotation_media_url)
+                    if match:
+                        file_user_id = match.group(1)
+                        filename = match.group(2)
+                        file_path = os.path.join(settings.UPLOAD_DIR, file_user_id, filename)
+                        if os.path.exists(file_path):
+                            annotation_url = annotation_service.process_detection_response(
+                                response["content"],
+                                file_path,
+                                current_user.id,
+                                filename,
+                                user_prompt=text_content
+                            )
+                elif annotation_media_url.startswith('http'):
+                    # External URL - pass URL directly to annotation service
+                    annotation_url = annotation_service.process_detection_response(
+                        response["content"],
+                        annotation_media_url,  # Pass URL as image source
+                        current_user.id,
+                        "url_image.jpg",
+                        user_prompt=text_content
+                    )
             
             result = ChatResponse(
                 message=MessageResponse.model_validate(assistant_message),
