@@ -202,6 +202,10 @@ class ChatManager {
 
             let buffer = ''; // Buffer for incomplete lines
 
+            // Tracking for thinking state
+            let isThinking = false;
+            let thinkingClosed = false;
+
             // Throttled rendering - only update DOM at most every 50ms (20fps)
             // This prevents main thread blocking during fast streaming of long responses
             let renderPending = false;
@@ -260,6 +264,20 @@ class ChatManager {
 
                                 if (data.type === 'content') {
                                     fullResponse += data.content;
+
+                                    // Detect thinking state from <think> tags
+                                    if (!thinkingClosed) {
+                                        if (fullResponse.includes('<think') && !isThinking) {
+                                            isThinking = true;
+                                            this.showTypingIndicator(true);
+                                        }
+                                        if (fullResponse.includes('</think>')) {
+                                            isThinking = false;
+                                            thinkingClosed = true;
+                                            this.hideTypingIndicator();
+                                        }
+                                    }
+
                                     scheduleRender();
                                 } else if (data.type === 'annotation') {
                                     // Received annotated detection image
@@ -402,16 +420,20 @@ class ChatManager {
         return messageEl;
     }
 
-    showTypingIndicator() {
+    showTypingIndicator(isThinking = false) {
         const messagesContainer = document.getElementById('chat-messages');
         if (!messagesContainer) return;
+
+        // Remove existing indicator if any
+        this.hideTypingIndicator();
 
         const indicator = utils.createElement('div', 'message message-assistant typing-message');
         indicator.id = 'typing-indicator';
         indicator.innerHTML = `
             <div class="avatar avatar-assistant">T</div>
             <div class="message-content">
-                <div class="typing-indicator">
+                <div class="typing-indicator ${isThinking ? 'thinking-mode' : ''}">
+                    ${isThinking ? '<span class="thinking-text">🧠 Thinking...</span>' : ''}
                     <span class="dot"></span>
                     <span class="dot"></span>
                     <span class="dot"></span>
@@ -421,6 +443,27 @@ class ChatManager {
 
         messagesContainer.appendChild(indicator);
         this.scrollToBottom();
+    }
+
+    updateTypingIndicator(isThinking) {
+        const indicator = document.getElementById('typing-indicator');
+        if (!indicator) return;
+
+        const typingDiv = indicator.querySelector('.typing-indicator');
+        if (typingDiv) {
+            typingDiv.classList.toggle('thinking-mode', isThinking);
+
+            // Update the text
+            let thinkingText = typingDiv.querySelector('.thinking-text');
+            if (isThinking && !thinkingText) {
+                thinkingText = document.createElement('span');
+                thinkingText.className = 'thinking-text';
+                thinkingText.textContent = '🧠 Thinking...';
+                typingDiv.insertBefore(thinkingText, typingDiv.firstChild);
+            } else if (!isThinking && thinkingText) {
+                thinkingText.remove();
+            }
+        }
     }
 
     hideTypingIndicator() {
