@@ -189,13 +189,16 @@ async def send_message(
                 # Update conversation
                 conversation.message_count = len(messages) + 2
                 
-                # Generate title if first message
+                # Generate title if first message (simple text parsing, no LLM)
                 if len(messages) == 0 and text_content:
-                    try:
-                        title = await llm_service.generate_title(text_content)
-                        conversation.title = title
-                    except Exception:
-                        conversation.title = text_content[:50] + "..." if len(text_content) > 50 else text_content
+                    # Use first 5 words or first 50 chars
+                    words = text_content.split()[:5]
+                    if len(words) >= 5:
+                        conversation.title = " ".join(words) + "..."
+                    elif len(text_content) > 50:
+                        conversation.title = text_content[:50] + "..."
+                    else:
+                        conversation.title = text_content
                 
                 await db.commit()
                 
@@ -274,13 +277,16 @@ async def send_message(
             conversation.message_count = len(messages) + 2
             conversation.total_tokens += response["tokens_used"]
             
-            # Generate title if first message
+            # Generate title if first message (simple text parsing, no LLM)
             if len(messages) == 0 and text_content:
-                try:
-                    title = await llm_service.generate_title(text_content)
-                    conversation.title = title
-                except Exception:
-                    conversation.title = text_content[:50] + "..." if len(text_content) > 50 else text_content
+                # Use first 5 words or first 50 chars
+                words = text_content.split()[:5]
+                if len(words) >= 5:
+                    conversation.title = " ".join(words) + "..."
+                elif len(text_content) > 50:
+                    conversation.title = text_content[:50] + "..."
+                else:
+                    conversation.title = text_content
             
             await db.commit()
             await db.refresh(assistant_message)
