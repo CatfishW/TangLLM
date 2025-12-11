@@ -12,6 +12,7 @@ class ChatManager {
         this.voiceInput = new VoiceInput();
         this.voiceOutput = new VoiceOutput();
         this.abortController = null;  // For canceling streaming requests
+        this.streamReader = null;  // For canceling stream reader
     }
 
     async init() {
@@ -182,6 +183,7 @@ class ChatManager {
         try {
             const stream = await api.sendMessageStream(content, this.currentConversation?.id, this.abortController.signal);
             const reader = stream.getReader();
+            this.streamReader = reader;  // Store reference for cancellation
             const decoder = new TextDecoder();
 
             let fullResponse = '';
@@ -367,16 +369,26 @@ class ChatManager {
             }
 
         } catch (error) {
-            this.hideTypingIndicator();
-            Toast.error(error.message || 'Failed to send message');
+            // Ignore abort errors - they are expected when user cancels
+            if (error.name !== 'AbortError') {
+                this.hideTypingIndicator();
+                Toast.error(error.message || 'Failed to send message');
+            }
         } finally {
             this.isStreaming = false;
             this.abortController = null;
+            this.streamReader = null;
             this.updateSendButton();
         }
     }
 
     cancelRequest() {
+        // Cancel the stream reader first
+        if (this.streamReader) {
+            this.streamReader.cancel().catch(() => { });
+            this.streamReader = null;
+        }
+        // Then abort the fetch request
         if (this.abortController) {
             this.abortController.abort();
             this.abortController = null;
