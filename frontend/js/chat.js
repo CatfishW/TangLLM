@@ -11,6 +11,7 @@ class ChatManager {
         this.uploadedFiles = [];
         this.voiceInput = new VoiceInput();
         this.voiceOutput = new VoiceOutput();
+        this.abortController = null;  // For canceling streaming requests
     }
 
     async init() {
@@ -175,10 +176,11 @@ class ChatManager {
         this.showTypingIndicator();
 
         this.isStreaming = true;
+        this.abortController = new AbortController();
         this.updateSendButton();
 
         try {
-            const stream = await api.sendMessageStream(content, this.currentConversation?.id);
+            const stream = await api.sendMessageStream(content, this.currentConversation?.id, this.abortController.signal);
             const reader = stream.getReader();
             const decoder = new TextDecoder();
 
@@ -336,8 +338,20 @@ class ChatManager {
             Toast.error(error.message || 'Failed to send message');
         } finally {
             this.isStreaming = false;
+            this.abortController = null;
             this.updateSendButton();
         }
+    }
+
+    cancelRequest() {
+        if (this.abortController) {
+            this.abortController.abort();
+            this.abortController = null;
+        }
+        this.isStreaming = false;
+        this.updateSendButton();
+        this.hideTypingIndicator();
+        Toast.info('Generation stopped');
     }
 
     addMessageToUI(role, text, files = []) {
@@ -423,11 +437,17 @@ class ChatManager {
 
     updateSendButton() {
         const sendBtn = document.getElementById('send-btn');
+        const cancelContainer = document.getElementById('cancel-request-container');
+
         if (sendBtn) {
             sendBtn.disabled = this.isStreaming;
             sendBtn.innerHTML = this.isStreaming ?
                 '<span class="spinner spinner-sm"></span>' :
                 '➤';
+        }
+
+        if (cancelContainer) {
+            cancelContainer.style.display = this.isStreaming ? 'flex' : 'none';
         }
     }
 
@@ -738,6 +758,13 @@ class ChatManager {
     renderChatInput() {
         return `
             <div class="chat-input-container">
+                <div class="cancel-request-container" id="cancel-request-container" style="display: none;">
+                    <button class="cancel-request-btn" id="cancel-request-btn" onclick="chatManager.cancelRequest()">
+                        <span class="cancel-icon">⏹</span>
+                        <span>Stop generating</span>
+                    </button>
+                </div>
+                
                 <div class="chat-input-wrapper">
                     <div class="file-preview" id="file-preview" style="display: none;"></div>
                     

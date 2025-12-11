@@ -182,8 +182,8 @@ class APIClient {
         });
     }
 
-    async sendMessageStream(content, conversationId = null) {
-        const response = await fetch(`${this.baseUrl}api/chat`, {
+    async sendMessageStream(content, conversationId = null, signal = null) {
+        const fetchOptions = {
             method: 'POST',
             headers: this.getHeaders(),
             body: JSON.stringify({
@@ -191,7 +191,13 @@ class APIClient {
                 content: content,
                 stream: true
             })
-        });
+        };
+
+        if (signal) {
+            fetchOptions.signal = signal;
+        }
+
+        const response = await fetch(`${this.baseUrl}api/chat`, fetchOptions);
 
         if (!response.ok) {
             const data = await response.json().catch(() => null);
