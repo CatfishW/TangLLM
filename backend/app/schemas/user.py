@@ -82,6 +82,8 @@ class UserSettingsBase(BaseModel):
     theme: str = "dark"
     enable_voice: bool = True
     enable_sounds: bool = True
+    show_thinking: bool = True
+    thinking_mode: str = "auto"  # auto, fast, thinking
 
 
 class UserSettingsUpdate(UserSettingsBase):

@@ -295,6 +295,130 @@
     border-bottom: 1px solid var(--color-border);
 }
 
+.chat-header-left {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+/* Thinking Mode Selector - ChatGPT Style */
+.thinking-mode-selector {
+    position: relative;
+}
+
+.thinking-mode-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-2) var(--space-3);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-size: var(--text-sm);
+    color: var(--color-text-primary);
+}
+
+.thinking-mode-btn:hover {
+    background: var(--color-bg-elevated);
+    border-color: var(--color-primary);
+}
+
+.thinking-mode-icon {
+    font-size: var(--text-base);
+}
+
+.thinking-mode-label {
+    font-weight: var(--font-semibold);
+}
+
+.thinking-mode-chevron {
+    font-size: 10px;
+    opacity: 0.6;
+    transition: transform var(--transition-fast);
+}
+
+.thinking-mode-selector:has(.thinking-mode-menu.show) .thinking-mode-chevron {
+    transform: rotate(180deg);
+}
+
+/* Dropdown Menu */
+.thinking-mode-menu {
+    position: absolute;
+    top: calc(100% + var(--space-2));
+    left: 0;
+    min-width: 280px;
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px) scale(0.95);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 100;
+    overflow: hidden;
+}
+
+.thinking-mode-menu.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+}
+
+.thinking-mode-option {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    cursor: pointer;
+    transition: background var(--transition-fast);
+}
+
+.thinking-mode-option:hover {
+    background: var(--color-bg-tertiary);
+}
+
+.thinking-mode-option.active {
+    background: linear-gradient(135deg, rgba(var(--color-primary-rgb), 0.1), rgba(var(--color-primary-rgb), 0.05));
+}
+
+.thinking-mode-option .option-icon {
+    font-size: var(--text-xl);
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-bg-tertiary);
+    border-radius: var(--radius-md);
+}
+
+.thinking-mode-option .option-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.thinking-mode-option .option-title {
+    font-weight: var(--font-semibold);
+    font-size: var(--text-sm);
+    color: var(--color-text-primary);
+}
+
+.thinking-mode-option .option-desc {
+    font-size: var(--text-xs);
+    color: var(--color-text-tertiary);
+}
+
+.thinking-mode-option .option-check {
+    color: var(--color-primary);
+    font-weight: var(--font-bold);
+    font-size: var(--text-base);
+}
+
 .chat-title {
     font-size: var(--text-lg);
     font-weight: var(--font-semibold);

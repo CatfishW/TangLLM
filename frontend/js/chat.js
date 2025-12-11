@@ -773,19 +773,44 @@ class ChatManager {
                 ${this.renderChatInput()}
             `;
         } else {
-            // Chat view - get thinking mode from localStorage
-            const thinkingMode = localStorage.getItem('thinkingMode') || 'auto';
+            // Chat view - get thinking mode from settings (database) or localStorage fallback
+            const thinkingMode = settingsManager.settings?.thinking_mode || localStorage.getItem('thinkingMode') || 'auto';
             chatContainer.innerHTML = `
                 <div class="chat-header">
                     <div class="chat-header-left">
-                        <div class="thinking-mode-selector">
-                            <select id="thinking-mode" class="thinking-mode-dropdown" onchange="chatManager.setThinkingMode(this.value)">
-                                <option value="auto" ${thinkingMode === 'auto' ? 'selected' : ''}>🤖 TangLLM Auto</option>
-                                <option value="fast" ${thinkingMode === 'fast' ? 'selected' : ''}>⚡ TangLLM Fast</option>
-                                <option value="thinking" ${thinkingMode === 'thinking' ? 'selected' : ''}>🧠 TangLLM Thinking</option>
-                            </select>
+                        <div class="thinking-mode-selector" id="thinking-mode-selector">
+                            <button class="thinking-mode-btn" onclick="chatManager.toggleThinkingModeMenu()">
+                                <span class="thinking-mode-icon">${thinkingMode === 'fast' ? '⚡' : thinkingMode === 'thinking' ? '🧠' : '🤖'}</span>
+                                <span class="thinking-mode-label">TangLLM ${thinkingMode === 'fast' ? 'Fast' : thinkingMode === 'thinking' ? 'Thinking' : 'Auto'}</span>
+                                <span class="thinking-mode-chevron">▼</span>
+                            </button>
+                            <div class="thinking-mode-menu" id="thinking-mode-menu">
+                                <div class="thinking-mode-option ${thinkingMode === 'auto' ? 'active' : ''}" onclick="chatManager.setThinkingMode('auto')">
+                                    <span class="option-icon">🤖</span>
+                                    <div class="option-content">
+                                        <span class="option-title">TangLLM Auto</span>
+                                        <span class="option-desc">Automatically decides when to think</span>
+                                    </div>
+                                    ${thinkingMode === 'auto' ? '<span class="option-check">✓</span>' : ''}
+                                </div>
+                                <div class="thinking-mode-option ${thinkingMode === 'fast' ? 'active' : ''}" onclick="chatManager.setThinkingMode('fast')">
+                                    <span class="option-icon">⚡</span>
+                                    <div class="option-content">
+                                        <span class="option-title">TangLLM Fast</span>
+                                        <span class="option-desc">Quick responses, no deep thinking</span>
+                                    </div>
+                                    ${thinkingMode === 'fast' ? '<span class="option-check">✓</span>' : ''}
+                                </div>
+                                <div class="thinking-mode-option ${thinkingMode === 'thinking' ? 'active' : ''}" onclick="chatManager.setThinkingMode('thinking')">
+                                    <span class="option-icon">🧠</span>
+                                    <div class="option-content">
+                                        <span class="option-title">TangLLM Thinking</span>
+                                        <span class="option-desc">Extended reasoning for complex tasks</span>
+                                    </div>
+                                    ${thinkingMode === 'thinking' ? '<span class="option-check">✓</span>' : ''}
+                                </div>
+                            </div>
                         </div>
-                        <h2 class="chat-title" id="chat-title">${utils.escapeHtml(this.currentConversation.title)}</h2>
                     </div>
                     <div class="chat-actions">
                         <button class="btn btn-ghost btn-icon" onclick="chatManager.exportConversation('markdown')" title="Export">
@@ -919,13 +944,55 @@ class ChatManager {
     }
 
     setThinkingMode(mode) {
+        // Save to both localStorage and database
         localStorage.setItem('thinkingMode', mode);
+
+        // Save to database via API
+        api.updateSettings({ thinking_mode: mode }).then(() => {
+            if (settingsManager.settings) {
+                settingsManager.settings.thinking_mode = mode;
+            }
+        }).catch(err => console.warn('Failed to save thinking mode to DB:', err));
+
         const modeNames = { auto: 'Auto', fast: 'Fast', thinking: 'Thinking' };
         Toast.success(`Switched to TangLLM ${modeNames[mode]}`);
+
+        // Close menu and re-render to update UI
+        this.closeThinkingModeMenu();
+        this.renderChat();
+    }
+
+    toggleThinkingModeMenu() {
+        const menu = document.getElementById('thinking-mode-menu');
+        if (menu) {
+            menu.classList.toggle('show');
+
+            // Close on outside click
+            if (menu.classList.contains('show')) {
+                setTimeout(() => {
+                    document.addEventListener('click', this.closeThinkingModeMenuHandler);
+                }, 0);
+            }
+        }
+    }
+
+    closeThinkingModeMenu() {
+        const menu = document.getElementById('thinking-mode-menu');
+        if (menu) {
+            menu.classList.remove('show');
+        }
+        document.removeEventListener('click', this.closeThinkingModeMenuHandler);
+    }
+
+    closeThinkingModeMenuHandler = (e) => {
+        const selector = document.getElementById('thinking-mode-selector');
+        if (selector && !selector.contains(e.target)) {
+            this.closeThinkingModeMenu();
+        }
     }
 
     getThinkingMode() {
-        return localStorage.getItem('thinkingMode') || 'auto';
+        return settingsManager.settings?.thinking_mode || localStorage.getItem('thinkingMode') || 'auto';
     }
 }
 
