@@ -20,6 +20,29 @@ async function renderApp() {
     await chatManager.init();
     await settingsManager.init();
 
+    // Auto-fetch available models and ensure valid model is selected
+    try {
+        const result = await api.getAvailableModels();
+        if (result.models && result.models.length > 0) {
+            settingsManager.availableModels = result.models;
+
+            // If current model is not in list, auto-select first available
+            const currentModel = settingsManager.settings?.model_id;
+            const modelIds = result.models.map(m => m.id);
+
+            if (!currentModel || !modelIds.includes(currentModel)) {
+                const firstModel = result.models[0].id;
+                console.log(`Auto-selecting model: ${firstModel}`);
+                await api.updateSettings({ model_id: firstModel });
+                if (settingsManager.settings) {
+                    settingsManager.settings.model_id = firstModel;
+                }
+            }
+        }
+    } catch (err) {
+        console.warn('Failed to auto-fetch models:', err);
+    }
+
     // Render main layout
     app.innerHTML = `
         <canvas id="particle-canvas"></canvas>
