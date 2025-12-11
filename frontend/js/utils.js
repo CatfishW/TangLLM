@@ -264,7 +264,7 @@ function parseMarkdown(text) {
         if (content) {
             const escapedThinking = escapeHtml(content);
             thinkingHtml = `
-                <details class="thinking-toggle" open>
+                <details class="thinking-toggle">
                     <summary class="thinking-summary">
                         <span class="thinking-icon">💭</span>
                         <span class="thinking-label">Thinking Process</span>
