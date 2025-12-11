@@ -980,15 +980,18 @@ class ChatManager {
     }
 
     setThinkingMode(mode) {
-        // Save to both localStorage and database
+        // Update localStorage immediately for instant UI feedback
         localStorage.setItem('thinkingMode', mode);
 
-        // Save to database via API
-        api.updateSettings({ thinking_mode: mode }).then(() => {
-            if (settingsManager.settings) {
-                settingsManager.settings.thinking_mode = mode;
-            }
-        }).catch(err => console.warn('Failed to save thinking mode to DB:', err));
+        // Also update settingsManager immediately so renderChat gets the new value
+        if (settingsManager.settings) {
+            settingsManager.settings.thinking_mode = mode;
+        }
+
+        // Save to database via API (async, no need to wait)
+        api.updateSettings({ thinking_mode: mode }).catch(err =>
+            console.warn('Failed to save thinking mode to DB:', err)
+        );
 
         const modeNames = { auto: 'Auto', fast: 'Fast', thinking: 'Thinking' };
         Toast.success(`Switched to TangLLM ${modeNames[mode]}`);
