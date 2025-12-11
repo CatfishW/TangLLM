@@ -863,6 +863,14 @@
     justify-content: center;
     text-align: center;
     padding: var(--space-8);
+    position: relative;
+}
+
+.welcome-mode-selector {
+    position: absolute;
+    top: var(--space-4);
+    left: 50%;
+    transform: translateX(-50%);
 }
 
 .welcome-logo {

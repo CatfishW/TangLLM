@@ -733,9 +733,44 @@ class ChatManager {
         if (!chatContainer) return;
 
         if (!this.currentConversation) {
-            // Welcome screen
+            // Welcome screen - get thinking mode from settings or localStorage
+            const thinkingMode = settingsManager.settings?.thinking_mode || localStorage.getItem('thinkingMode') || 'auto';
             chatContainer.innerHTML = `
                 <div class="welcome-screen">
+                    <div class="thinking-mode-selector welcome-mode-selector" id="thinking-mode-selector">
+                        <button class="thinking-mode-btn" onclick="chatManager.toggleThinkingModeMenu()">
+                            <span class="thinking-mode-icon">${thinkingMode === 'fast' ? '⚡' : thinkingMode === 'thinking' ? '🧠' : '🤖'}</span>
+                            <span class="thinking-mode-label">TangLLM ${thinkingMode === 'fast' ? 'Fast' : thinkingMode === 'thinking' ? 'Thinking' : 'Auto'}</span>
+                            <span class="thinking-mode-chevron">▼</span>
+                        </button>
+                        <div class="thinking-mode-menu" id="thinking-mode-menu">
+                            <div class="thinking-mode-option ${thinkingMode === 'auto' ? 'active' : ''}" onclick="chatManager.setThinkingMode('auto')">
+                                <span class="option-icon">🤖</span>
+                                <div class="option-content">
+                                    <span class="option-title">TangLLM Auto</span>
+                                    <span class="option-desc">Automatically decides when to think</span>
+                                </div>
+                                ${thinkingMode === 'auto' ? '<span class="option-check">✓</span>' : ''}
+                            </div>
+                            <div class="thinking-mode-option ${thinkingMode === 'fast' ? 'active' : ''}" onclick="chatManager.setThinkingMode('fast')">
+                                <span class="option-icon">⚡</span>
+                                <div class="option-content">
+                                    <span class="option-title">TangLLM Fast</span>
+                                    <span class="option-desc">Quick responses, no deep thinking</span>
+                                </div>
+                                ${thinkingMode === 'fast' ? '<span class="option-check">✓</span>' : ''}
+                            </div>
+                            <div class="thinking-mode-option ${thinkingMode === 'thinking' ? 'active' : ''}" onclick="chatManager.setThinkingMode('thinking')">
+                                <span class="option-icon">🧠</span>
+                                <div class="option-content">
+                                    <span class="option-title">TangLLM Thinking</span>
+                                    <span class="option-desc">Extended reasoning for complex tasks</span>
+                                </div>
+                                ${thinkingMode === 'thinking' ? '<span class="option-check">✓</span>' : ''}
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="welcome-logo">
                         <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
                             <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2"/>

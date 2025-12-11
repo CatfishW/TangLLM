@@ -159,6 +159,18 @@ async def send_message(
     temperature = float(user_settings.temperature) if user_settings else 0.7
     max_tokens = user_settings.max_tokens if user_settings else 4096
     
+    # Get thinking mode from user settings
+    thinking_mode = getattr(user_settings, 'thinking_mode', 'auto') if user_settings else 'auto'
+    
+    # Determine if thinking should be enabled based on mode
+    if thinking_mode == 'fast':
+        enable_thinking = False
+    elif thinking_mode == 'thinking':
+        enable_thinking = True
+    else:  # auto mode - enable for longer inputs
+        text_length = sum(len(c.text or '') for c in chat_request.content if c.text)
+        enable_thinking = text_length > 100  # Enable thinking for longer prompts
+    
     if chat_request.stream:
         # Streaming response
         async def generate():
@@ -170,7 +182,8 @@ async def send_message(
                     chat_request.content,
                     system_prompt=system_prompt,
                     temperature=temperature,
-                    max_tokens=max_tokens
+                    max_tokens=max_tokens,
+                    enable_thinking=enable_thinking
                 ):
                     full_response += chunk
                     yield f"data: {json.dumps({'type': 'content', 'content': chunk})}\n\n"

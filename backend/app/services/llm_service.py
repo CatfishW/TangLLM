@@ -184,18 +184,27 @@ class LLMService:
         new_content: List[MessageContent],
         system_prompt: Optional[str] = None,
         temperature: float = 0.7,
-        max_tokens: int = 4096
+        max_tokens: int = 4096,
+        enable_thinking: bool = True
     ) -> AsyncGenerator[str, None]:
         """Stream chat response from the LLM."""
         messages = self._build_messages(conversation_history, new_content, system_prompt)
         
         try:
+            # Build extra_body for GLM thinking control
+            extra_body = {
+                "chat_template_kwargs": {
+                    "enable_thinking": enable_thinking
+                }
+            }
+            
             stream = await self.client.chat.completions.create(
                 model=self.model_id,
                 messages=messages,
                 temperature=temperature,
                 max_tokens=max_tokens,
-                stream=True
+                stream=True,
+                extra_body=extra_body
             )
             
             in_thinking = False
