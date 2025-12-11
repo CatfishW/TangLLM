@@ -8,6 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 import json
 import asyncio
+import os
+import re
 
 from ..database import get_db
 from ..schemas.message import ChatRequest, MessageResponse, ChatResponse
@@ -193,7 +195,6 @@ async def send_message(
                 if media_url and media_type == "image":
                     annotation_service = AnnotationService()
                     # Get the actual file path from the media URL
-                    import re
                     match = re.search(r'/api/files/(\d+)/([^/]+)$', media_url)
                     if match:
                         file_user_id = match.group(1)
@@ -267,8 +268,7 @@ async def send_message(
             if media_url and media_type == "image":
                 annotation_service = AnnotationService()
                 # Get the actual file path from the media URL
-                import re as re_module
-                match = re_module.search(r'/api/files/(\d+)/([^/]+)$', media_url)
+                match = re.search(r'/api/files/(\d+)/([^/]+)$', media_url)
                 if match:
                     file_user_id = match.group(1)
                     filename = match.group(2)
