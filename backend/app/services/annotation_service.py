@@ -15,10 +15,25 @@ from ..config import settings
 class AnnotationService:
     """Service for annotating images with detection bounding boxes."""
     
+    # Color name to RGB mapping
+    COLOR_MAP = {
+        'red': (255, 0, 0),
+        'green': (0, 255, 0),
+        'blue': (0, 0, 255),
+        'yellow': (255, 255, 0),
+        'cyan': (0, 255, 255),
+        'magenta': (255, 0, 255),
+        'orange': (255, 165, 0),
+        'purple': (128, 0, 128),
+        'pink': (255, 192, 203),
+        'lime': (0, 255, 0),
+        'white': (255, 255, 255),
+        'black': (0, 0, 0),
+    }
+    
     # Default bounding box style
-    BOX_COLOR = (255, 0, 0)  # Red
+    DEFAULT_COLORS = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255), (0, 255, 255)]
     BOX_WIDTH = 3
-    LABEL_BG_COLOR = (255, 0, 0, 180)  # Semi-transparent red
     LABEL_TEXT_COLOR = (255, 255, 255)  # White
     
     @staticmethod
@@ -54,6 +69,55 @@ class AnnotationService:
         
         return coordinates if coordinates else None
     
+    def parse_colors_from_text(self, text: str, num_boxes: int) -> List[Tuple[int, int, int]]:
+        """
+        Extract color specifications from text and map them to bounding boxes.
+        
+        Looks for patterns like:
+        - "player head in green" or "green rectangle"
+        - "wheel in red" or "red box"
+        
+        The colors are matched in the order they appear in the text.
+        
+        Args:
+            text: The combined user prompt and LLM response
+            num_boxes: Number of bounding boxes to assign colors to
+            
+        Returns:
+            List of RGB color tuples, one for each box
+        """
+        # Find all color mentions in order of appearance
+        color_names = list(self.COLOR_MAP.keys())
+        color_pattern = r'\b(' + '|'.join(color_names) + r')\b'
+        
+        matches = re.findall(color_pattern, text.lower())
+        
+        colors = []
+        for match in matches:
+            if match in self.COLOR_MAP:
+                colors.append(self.COLOR_MAP[match])
+        
+        # Remove duplicates while preserving order
+        seen = set()
+        unique_colors = []
+        for color in colors:
+            if color not in seen:
+                seen.add(color)
+                unique_colors.append(color)
+        
+        # If we found colors, use them; otherwise use defaults
+        if unique_colors:
+            # Extend with defaults if not enough colors specified
+            result = unique_colors[:num_boxes]
+            while len(result) < num_boxes:
+                # Cycle through unique colors or use defaults
+                idx = len(result) % len(unique_colors)
+                result.append(unique_colors[idx])
+            return result
+        else:
+            # Use cycling default colors
+            return [self.DEFAULT_COLORS[i % len(self.DEFAULT_COLORS)] for i in range(num_boxes)]
+    
     @staticmethod
     def normalize_coordinates(
         coords: List[Tuple[int, int, int, int]], 
@@ -83,6 +147,7 @@ class AnnotationService:
         self,
         image_path: str,
         coordinates: List[Tuple[int, int, int, int]],
+        colors: Optional[List[Tuple[int, int, int]]] = None,
         labels: Optional[List[str]] = None,
         normalize: bool = True
     ) -> Image.Image:
@@ -92,6 +157,7 @@ class AnnotationService:
         Args:
             image_path: Path to the source image
             coordinates: List of (xmin, ymin, xmax, ymax) tuples
+            colors: Optional list of RGB color tuples for each box
             labels: Optional labels for each bounding box
             normalize: Whether to check and convert normalized coordinates
             
@@ -111,6 +177,10 @@ class AnnotationService:
         if normalize:
             coordinates = self.normalize_coordinates(coordinates, width, height)
         
+        # Use provided colors or defaults
+        if not colors:
+            colors = [self.DEFAULT_COLORS[i % len(self.DEFAULT_COLORS)] for i in range(len(coordinates))]
+        
         # Create drawing context
         draw = ImageDraw.Draw(image)
         
@@ -128,10 +198,13 @@ class AnnotationService:
             xmax = max(0, min(xmax, width))
             ymax = max(0, min(ymax, height))
             
+            # Get color for this box
+            box_color = colors[i] if i < len(colors) else self.DEFAULT_COLORS[0]
+            
             # Draw rectangle
             draw.rectangle(
                 [xmin, ymin, xmax, ymax],
-                outline=self.BOX_COLOR,
+                outline=box_color,
                 width=self.BOX_WIDTH
             )
             
@@ -150,7 +223,7 @@ class AnnotationService:
                 
                 draw.rectangle(
                     [label_x, label_y, label_x + text_width + 8, label_y + text_height + 4],
-                    fill=self.BOX_COLOR
+                    fill=box_color
                 )
                 
                 # Draw label text
@@ -211,7 +284,8 @@ class AnnotationService:
         response_text: str,
         image_path: str,
         user_id: int,
-        original_filename: Optional[str] = None
+        original_filename: Optional[str] = None,
+        user_prompt: Optional[str] = None
     ) -> Optional[str]:
         """
         Main entry point: Parse coordinates from response and create annotated image.
@@ -221,6 +295,7 @@ class AnnotationService:
             image_path: Path to the user's uploaded image
             user_id: User ID for saving the annotated image
             original_filename: Original filename for extension
+            user_prompt: Original user prompt (for extracting color specifications)
             
         Returns:
             URL to annotated image, or None if no coordinates found
@@ -232,8 +307,12 @@ class AnnotationService:
             return None
         
         try:
-            # Annotate image
-            annotated = self.annotate_image(image_path, coordinates)
+            # Parse colors from user prompt (if provided) combined with response
+            combined_text = (user_prompt or "") + " " + response_text
+            colors = self.parse_colors_from_text(combined_text, len(coordinates))
+            
+            # Annotate image with colors
+            annotated = self.annotate_image(image_path, coordinates, colors=colors)
             
             # Save and return URL
             return self.save_annotated_image(annotated, user_id, original_filename)

@@ -203,7 +203,8 @@ async def send_message(
                                 full_response,
                                 file_path,
                                 current_user.id,
-                                filename
+                                filename,
+                                user_prompt=text_content
                             )
                 
                 # Send annotation event if we created an annotated image
@@ -276,7 +277,8 @@ async def send_message(
                             response["content"],
                             file_path,
                             current_user.id,
-                            filename
+                            filename,
+                            user_prompt=text_content
                         )
             
             result = ChatResponse(
