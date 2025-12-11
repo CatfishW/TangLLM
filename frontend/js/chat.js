@@ -224,7 +224,18 @@ class ChatManager {
                 const render = () => {
                     // Double check content changed (it might have been rendered by a forced flush)
                     if (fullResponse.length !== lastRenderedContentLength) {
+                        // Preserve thinking toggle state before re-render
+                        const existingToggle = contentEl.querySelector('.thinking-toggle');
+                        const wasOpen = existingToggle?.open || false;
+
                         contentEl.innerHTML = utils.parseMarkdown(fullResponse);
+
+                        // Restore thinking toggle state after re-render
+                        const newToggle = contentEl.querySelector('.thinking-toggle');
+                        if (newToggle && wasOpen) {
+                            newToggle.open = true;
+                        }
+
                         this.scrollToBottom();
                         lastRenderTime = performance.now();
                         lastRenderedContentLength = fullResponse.length;
