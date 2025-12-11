@@ -180,21 +180,27 @@ function setupClipboardPaste() {
         if (!clipboardData || !clipboardData.items) return;
 
         const items = Array.from(clipboardData.items);
-        const imageItems = items.filter(item => item.type.startsWith('image/'));
+        // Support both images and videos
+        const mediaItems = items.filter(item =>
+            item.type.startsWith('image/') || item.type.startsWith('video/')
+        );
 
-        if (imageItems.length === 0) return;
+        if (mediaItems.length === 0) return;
 
-        // Prevent default paste behavior for images
+        // Prevent default paste behavior for media
         e.preventDefault();
 
         // Convert clipboard items to files
         const files = [];
-        for (const item of imageItems) {
+        for (const item of mediaItems) {
             const file = item.getAsFile();
             if (file) {
-                // Create a new file with a proper name
-                const extension = file.type.split('/')[1] || 'png';
-                const newFile = new File([file], `pasted_image_${Date.now()}.${extension}`, {
+                // Determine if it's image or video
+                const isVideo = item.type.startsWith('video/');
+                const prefix = isVideo ? 'pasted_video' : 'pasted_image';
+                const extension = file.type.split('/')[1] || (isVideo ? 'mp4' : 'png');
+
+                const newFile = new File([file], `${prefix}_${Date.now()}.${extension}`, {
                     type: file.type
                 });
                 files.push(newFile);
@@ -203,7 +209,7 @@ function setupClipboardPaste() {
 
         if (files.length > 0) {
             await chatManager.handleFileUpload(files);
-            Toast.success(`Pasted ${files.length} image(s) from clipboard`);
+            Toast.success(`Pasted ${files.length} file(s) from clipboard`);
         }
     });
 }
