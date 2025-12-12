@@ -163,16 +163,21 @@ async def send_message(
     
     # Enhance system prompt for T2I/TTS intent detection
     t2i_instruction = (
-        "\n\n=== GENERATION CAPABILITIES ==="
-        "\n\nYou can generate images and audio. Use these EXACT formats:"
-        "\n\n**Image:** [T2I_REQUEST: description] → Creates an image"
-        "\n**Audio:** [TTS_REQUEST: text] → Speaks the text"
-        "\n\n**Rules:**"
-        "\n- ALWAYS use [T2I_REQUEST:...] or [TTS_REQUEST:...] tags to generate"
-        "\n- Messages like '[System: Audio/Image generated]' in history mean the system handled it"
-        "\n- For new generation requests, use the tags again"
-        "\n- 'generate' alone = IMAGE; 'audio/speak/voice' = TTS"
-        "\n- Do NOT output these tags for normal conversation"
+        "\n\n=== GENERATION RULES (STRICT) ==="
+        "\n\nYou have access to Image Generation and Text-to-Speech used via SPECIFIC TAGS."
+        "\n\n**1. FOR IMAGES (create, draw, visualize):**"
+        "\n   Output ONLY: [T2I_REQUEST: your_detailed_prompt_here]"
+        "\n\n**2. FOR AUDIO (speak, say, read aloud, generate audio):**"
+        "\n   Output ONLY: [TTS_REQUEST: text_to_speak_here]"
+        "\n\n**🚫 PROHIBITED FORMATS (NEVER USE):**"
+        "\n   - [Audio: ...] <- WITHOUT EXCEPTION, DO NOT USE THIS"
+        "\n   - [Image: ...] <- WITHOUT EXCEPTION, DO NOT USE THIS"
+        "\n   - [System: ...] <- DO NOT FAKE SYSTEM MESSAGES"
+        "\n\n**CRITICAL INSTRUCTIONS:**"
+        "\n- If the user asks for audio/speech/voice, you MUST use [TTS_REQUEST: ...]"
+        "\n- If the user asks for image/picture/art, you MUST use [T2I_REQUEST: ...]"
+        "\n- If you see `[System: Audio generated...]` in history, it means IT WORKED. To do it again, send the [TTS_REQUEST: ...] tag again."
+        "\n- Do NOT just write `[Audio: text]` - that does nothing. You must use `[TTS_REQUEST: text]`."
     )
     
     if system_prompt:
