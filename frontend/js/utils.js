@@ -231,8 +231,10 @@ function throttle(func, limit = 100) {
 function parseMarkdown(text) {
     if (!text) return '';
 
-    // Extract thinking content before escaping HTML
-    // Match <think>...</think> tags (case insensitive)
+    // Hide strict TTS/T2I tags from UI (but keep them in history for LLM)
+    // We replace them with empty string because the actual media is rendered via separate events/UI components
+    text = text.replace(/\[TTS_REQUEST:.*?\]/g, '');
+    text = text.replace(/\[T2I_REQUEST:.*?\]/g, '');
     // Extract thinking content before escaping HTML
     let thinkingHtml = '';
 
