@@ -60,6 +60,7 @@ class Settings(BaseSettings):
     MAX_UPLOAD_SIZE: int = 100 * 1024 * 1024  # 100MB for videos (will be compressed)
     ALLOWED_IMAGE_TYPES: list = ["image/jpeg", "image/png", "image/gif", "image/webp"]
     ALLOWED_VIDEO_TYPES: list = ["video/mp4", "video/webm", "video/quicktime"]
+    ALLOWED_AUDIO_TYPES: list = ["audio/mpeg", "audio/wav", "audio/x-wav", "audio/aac", "audio/ogg", "audio/flac", "audio/x-m4a"]
     
     # Text-to-Image API
     T2I_API_BASE: str = "https://game.agaii.org/t2i"

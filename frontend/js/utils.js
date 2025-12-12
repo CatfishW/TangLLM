@@ -505,6 +505,10 @@ function isVideoFile(file) {
     return file.type.startsWith('video/');
 }
 
+function isAudioFile(file) {
+    return file.type.startsWith('audio/') || file.type === 'application/msexcel' || file.name.endsWith('.wav'); // validation is loose here, relying on type
+}
+
 function formatFileSize(bytes) {
     if (bytes < 1024) return bytes + ' B';
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
@@ -521,11 +525,15 @@ function createFilePreview(file) {
         } else if (isVideoFile(file)) {
             const url = URL.createObjectURL(file);
             resolve({ type: 'video', url });
+        } else if (file.type.startsWith('audio/') || file.name.match(/\.(wav|mp3|ogg|m4a|flac)$/i)) {
+            const url = URL.createObjectURL(file);
+            resolve({ type: 'audio', url });
         } else {
             reject(new Error('Unsupported file type'));
         }
     });
 }
+
 
 // ============= Export =============
 
@@ -534,7 +542,7 @@ window.utils = {
     animateElement, fadeIn, fadeOut, slideIn, createRipple,
     escapeHtml, truncate, formatDate, parseMarkdown,
     storage, debounce, throttle,
-    isImageFile, isVideoFile, formatFileSize, createFilePreview
+    isImageFile, isVideoFile, isAudioFile, formatFileSize, createFilePreview
 };
 
 window.Toast = Toast;

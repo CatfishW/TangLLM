@@ -41,6 +41,8 @@ class FileService:
             return "image"
         elif content_type in settings.ALLOWED_VIDEO_TYPES:
             return "video"
+        elif content_type in settings.ALLOWED_AUDIO_TYPES:
+            return "audio"
         return None
     
     def _check_ffmpeg_available(self) -> bool:

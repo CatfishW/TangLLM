@@ -635,7 +635,8 @@ class ChatManager {
             <div class="file-preview-item">
                 ${file.type === 'image' ?
                 `<img src="${file.preview}" alt="${file.name}">` :
-                `<video src="${file.preview}"></video>`
+                (file.type === 'video' ? `<video src="${file.preview}"></video>` :
+                    `<div class="audio-preview-icon" title="${file.name}">🎵</div>`)
             }
                 <button class="file-preview-remove" onclick="chatManager.removeFile(${index})">×</button>
             </div>
@@ -989,7 +990,7 @@ class ChatManager {
                             <button class="btn btn-ghost btn-icon" id="voice-btn" onclick="chatManager.toggleVoiceInput()" title="Voice input">
                                 🎤
                             </button>
-                            <input type="file" id="file-input" accept="image/*,video/*" multiple hidden 
+                            <input type="file" id="file-input" accept="image/*,video/*,audio/*,.wav,.mp3,.ogg,.m4a" multiple hidden 
                                    onchange="chatManager.handleFileUpload(this.files)">
                         </div>
                         
