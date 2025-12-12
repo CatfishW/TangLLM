@@ -127,7 +127,7 @@ async def send_message(
     for part in chat_request.content:
         if part.type == "text":
             text_content = part.text or ""
-        elif part.type in ["image", "video"]:
+        elif part.type in ["image", "video", "audio"]:
             current_media_type = part.type
             current_media_url = part.url
     
@@ -302,25 +302,7 @@ async def send_message(
                                 voice_path = None
                                 is_upload = False
                                 
-                                # Scan chat_request.content for media URLs if we want to determine voice
-                                # Currently we check if there was a file upload in the context
-                                # Since we don't have direct access to 'files' here easily unless we look at request content content list
-                                # We check content list for other items
-                                
-                                for item in chat_request.content:
-                                     # Assuming 'image' or 'video' - but we might have 'audio' if supported or treat video as audio source?
-                                     # The user prompt likely contained the audio reference
-                                     # For now, let's look for explicit patterns in tts_text if user said @[filename]?
-                                     # Or logic: check for 'audio' typed message content?
-                                     # Let's rely on backend file service path if we can find it?
-                                     pass
-                                
-                                # Actually, simply check if the user uploaded a file in this turn
-                                # The ChatRequest comes with list of content.
-                                # If any content item is a URL to /api/files/..., we can use it.
-                                # But we need to know if it's audio.
-                                # Let's peek at extensions in the URL.
-                                
+                                # 1. Check current request uploads
                                 for item in chat_request.content:
                                     if item.url and "/api/files/" in item.url:
                                         ext = os.path.splitext(item.url)[1].lower()
@@ -335,6 +317,23 @@ async def send_message(
                                                     voice_path = file_path
                                                     is_upload = True
                                                     break
+                                
+                                # 2. Fallback: Check conversation history for consistent voice usage
+                                if not voice_path:
+                                    for msg in reversed(conversation_history):
+                                        if msg.get("role") == "user" and msg.get("media_type") == "audio" and msg.get("media_url"):
+                                             # Resolve path from history URL
+                                             item_url = msg["media_url"]
+                                             if "/api/files/" in item_url:
+                                                 match = re.search(r'/api/files/(\d+)/([^/]+)$', item_url)
+                                                 if match:
+                                                     f_uid = match.group(1)
+                                                     f_name = match.group(2)
+                                                     file_path = os.path.join(settings.UPLOAD_DIR, f_uid, f_name)
+                                                     if os.path.exists(file_path):
+                                                         voice_path = file_path
+                                                         is_upload = True
+                                                         break
 
                                 tts_service_inst = TTSService()
                                 result = await tts_service_inst.generate_speech(tts_text, current_user.id, voice_path, is_upload)
