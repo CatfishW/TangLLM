@@ -164,17 +164,15 @@ async def send_message(
     # Enhance system prompt for T2I/TTS intent detection
     t2i_instruction = (
         "\n\n=== GENERATION CAPABILITIES ==="
-        "\n\nYou have two generation capabilities. ALWAYS use the exact tag format to trigger them:"
-        "\n\n**1. Image Generation:** [T2I_REQUEST: <detailed visual description>]"
-        "\n   - Use when: user asks to create/draw/generate an image/picture/art"
-        "\n\n**2. Text-to-Speech:** [TTS_REQUEST: <text to speak>]"
-        "\n   - Use when: user asks to speak/say/read aloud/generate audio"
-        "\n\n**CRITICAL:**"
-        "\n- You MUST use [T2I_REQUEST:...] or [TTS_REQUEST:...] tags - these trigger the actual generation"
-        "\n- If you see '🔊' in conversation history, that means audio was generated - use [TTS_REQUEST:...] again for new requests"
-        "\n- 'Generate' alone = IMAGE, unless user says 'audio/speech/voice'"
-        "\n- For object detection, output coordinates [[x1,y1,x2,y2]], NOT T2I"
-        "\n- Do NOT explain these features - just use the tags directly"
+        "\n\nYou can generate images and audio. Use these EXACT formats:"
+        "\n\n**Image:** [T2I_REQUEST: description] → Creates an image"
+        "\n**Audio:** [TTS_REQUEST: text] → Speaks the text"
+        "\n\n**Rules:**"
+        "\n- ALWAYS use [T2I_REQUEST:...] or [TTS_REQUEST:...] tags to generate"
+        "\n- Messages like '[System: Audio/Image generated]' in history mean the system handled it"
+        "\n- For new generation requests, use the tags again"
+        "\n- 'generate' alone = IMAGE; 'audio/speak/voice' = TTS"
+        "\n- Do NOT output these tags for normal conversation"
     )
     
     if system_prompt:
@@ -289,7 +287,8 @@ async def send_message(
                                         
                                         # Send result
                                         yield f"data: {json.dumps({'type': 'image_generated', 'url': result['url'], 'prompt': prompt})}\n\n"
-                                        full_response = f"Generated image for: {prompt}\n![{prompt}]({result['url']})"
+                                        full_response = f"[System: Image generated for '{prompt[:50]}...']"
+                                        t2i_buffer = ""  # Clear buffer
                                         
                                     except Exception as e:
                                         err_msg = f"\n\nError generating image: {str(e)}"
@@ -367,9 +366,8 @@ async def send_message(
                                     
                                     if result["success"]:
                                         yield f"data: {json.dumps({'type': 'audio_generated', 'url': result['url'], 'text': tts_text})}\n\n"
-                                        # Markdown audio player? Not standard. Use text link or message.
-                                        # We'll rely on frontend specific event to render player.
-                                        full_response = f"🔊 {tts_text}"
+                                        # Save to history in a format LLM won't mimic
+                                        full_response = f"[System: Audio generated for '{tts_text[:50]}...']"
                                         t2i_buffer = ""  # Clear buffer after processing
                                     else:
                                         err_msg = f"\nFailed to generate audio: {result.get('error')}"
