@@ -68,16 +68,26 @@ async function renderApp() {
             
             <div class="sidebar-footer">
                 <div class="user-profile dropdown" id="user-dropdown">
-                    <div class="avatar">${authManager.getUser()?.username?.[0] || 'U'}</div>
-                    <div class="user-info">
-                        <div class="user-name">${authManager.getUser()?.full_name || authManager.getUser()?.username}</div>
-                        <div class="user-email">${authManager.getUser()?.email}</div>
+                    <div class="user-profile-btn">
+                        <div class="avatar avatar-sm">${authManager.getUser()?.username?.[0] || 'U'}</div>
+                        <div class="user-info">
+                            <div class="user-name">${authManager.getUser()?.full_name || authManager.getUser()?.username}</div>
+                            <div class="user-subtext">Free Plan</div>
+                        </div>
+                        <span class="user-menu-icon">⋯</span>
                     </div>
-                    <span>⋮</span>
                     
-                    <div class="dropdown-menu">
+                    <div class="dropdown-menu user-dropdown-menu">
+                        <div class="dropdown-header">
+                            <div class="user-name">${authManager.getUser()?.full_name || authManager.getUser()?.username}</div>
+                            <div class="user-email">${authManager.getUser()?.email}</div>
+                        </div>
+                        <div class="dropdown-divider"></div>
                         <button class="dropdown-item" onclick="settingsManager.openSettings()">
                             ⚙️ Settings
+                        </button>
+                        <button class="dropdown-item item-danger" onclick="chatManager.clearAllHistory()">
+                            🗑️ Clear All History
                         </button>
                         <div class="dropdown-divider"></div>
                         <button class="dropdown-item" onclick="authManager.logout(); renderAuthPage();">

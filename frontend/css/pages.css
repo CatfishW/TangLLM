@@ -209,22 +209,34 @@
 
 /* User Profile in Sidebar */
 .user-profile {
+    position: relative;
+    width: 100%;
+}
+
+.user-profile-btn {
     display: flex;
     align-items: center;
     gap: var(--space-3);
-    padding: var(--space-2);
-    border-radius: var(--radius-lg);
+    padding: var(--space-2) var(--space-3);
+    background: transparent;
+    border-radius: var(--radius-full);
     cursor: pointer;
     transition: all var(--transition-fast);
+    border: 1px solid transparent;
 }
 
-.user-profile:hover {
-    background: var(--color-bg-tertiary);
+.user-profile-btn:hover,
+.user-profile.active .user-profile-btn {
+    background: var(--color-bg-elevated);
+    border-color: var(--color-border);
 }
 
 .user-info {
     flex: 1;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
 }
 
 .user-name {
@@ -236,12 +248,183 @@
     white-space: nowrap;
 }
 
-.user-email {
+.user-subtext {
     font-size: var(--text-xs);
-    color: var(--color-text-muted);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    color: var(--color-text-tertiary);
+}
+
+.user-menu-icon {
+    color: var(--color-text-tertiary);
+    font-size: 1.2rem;
+    line-height: 0.5;
+}
+
+.user-dropdown-menu {
+    bottom: 100%;
+    top: auto;
+    left: 0;
+    right: 0;
+    width: 100%;
+    margin-bottom: var(--space-2);
+    transform-origin: bottom center;
+}
+
+.dropdown-header {
+    padding: var(--space-3);
+}
+
+.dropdown-header .user-name {
+    font-size: var(--text-base);
+    font-weight: var(--font-semibold);
+}
+
+.dropdown-header .user-email {
+    font-size: var(--text-xs);
+    color: var(--color-text-secondary);
+}
+
+.item-danger {
+    color: var(--color-error);
+}
+
+.item-danger:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+/* ============= Thinking Mode Selector (Grok Style) ============= */
+.thinking-mode-selector {
+    position: relative;
+    display: inline-block;
+}
+
+.thinking-mode-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    color: var(--color-text-secondary);
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+}
+
+.thinking-mode-btn:hover,
+.thinking-mode-selector:hover .thinking-mode-btn {
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-primary);
+}
+
+.thinking-mode-icon {
+    font-size: 1.1em;
+}
+
+.thinking-mode-label {
+    margin-right: var(--space-1);
+}
+
+.thinking-mode-chevron {
+    font-size: 0.7em;
+    opacity: 0.5;
+}
+
+/* Floating Menu */
+.thinking-mode-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: var(--space-2);
+    width: 280px;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    padding: var(--space-2);
+    box-shadow: var(--shadow-xl);
+    z-index: var(--z-dropdown);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all var(--transition-fast);
+}
+
+.thinking-mode-menu.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.thinking-mode-option {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    border: 1px solid transparent;
+}
+
+.thinking-mode-option:hover {
+    background: var(--color-bg-tertiary);
+}
+
+.thinking-mode-option.active {
+    background: var(--color-bg-elevated);
+    border-color: var(--color-border);
+}
+
+.option-icon {
+    font-size: 1.25rem;
+    width: 24px;
+    text-align: center;
+}
+
+.option-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.option-title {
+    font-weight: var(--font-medium);
+    font-size: var(--text-sm);
+    color: var(--color-text-primary);
+}
+
+.option-desc {
+    font-size: 0.75rem;
+    /* Tiny text */
+    color: var(--color-text-tertiary);
+}
+
+.option-check {
+    color: var(--color-primary);
+    font-weight: bold;
+}
+
+/* Specific Welcome Screen adjustments */
+.welcome-mode-selector {
+    margin-bottom: var(--space-4);
+}
+
+.welcome-mode-selector .thinking-mode-btn {
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    padding: var(--space-2) var(--space-4);
+}
+
+.welcome-mode-selector .thinking-mode-menu {
+    left: 50%;
+    transform: translateX(-50%) translateY(-10px);
+    margin-top: var(--space-2);
+}
+
+.welcome-mode-selector .thinking-mode-menu.show {
+    transform: translateX(-50%) translateY(0);
 }
 
 /* Dropdown in sidebar footer should open upward */

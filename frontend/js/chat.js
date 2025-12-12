@@ -754,13 +754,6 @@ class ChatManager {
                 `).join('')}
             </div>
 
-            ${this.conversations.length > 0 ? `
-            <div style="margin-top: auto; padding: var(--space-4); border-top: 1px solid var(--color-border);">
-                <button class="btn-ghost btn-sm" onclick="chatManager.clearAllHistory()" style="width: 100%; color: var(--color-text-tertiary);">
-                    🗑️ Clear All History
-                </button>
-            </div>
-            ` : ''}
         `;
     }
 
