@@ -321,9 +321,9 @@ async def send_message(
                                     
                                     # Validate TTS text length to prevent API errors
                                     if len(tts_text.strip()) < 10:
-                                        err_msg = f"\nText too short for TTS (minimum 10 characters): '{tts_text}'"
-                                        yield f"data: {json.dumps({'type': 'content', 'content': err_msg})}\n\n"
-                                        full_response = err_msg
+                                        # Silent failure - don't show raw tags or error to user
+                                        # Just clear buffer and continue without TTS
+                                        full_response = ""  # Don't save raw tag to message
                                         t2i_buffer = ""
                                         continue
                                     
@@ -381,11 +381,13 @@ async def send_message(
                                         yield f"data: {json.dumps({'type': 'content', 'content': err_msg})}\n\n"
                                         full_response = f"Request: {tts_text}\n{err_msg}"
                                 else:
-                                    yield f"data: {json.dumps({'type': 'content', 'content': t2i_buffer})}\n\n"
-                                    full_response += t2i_buffer
+                                    # Don't show raw tags to user
+                                    full_response = ""
+                                    t2i_buffer = ""
                             else:
-                                 yield f"data: {json.dumps({'type': 'content', 'content': t2i_buffer})}\n\n"
-                                 full_response += t2i_buffer
+                                 # Don't show raw tags to user
+                                 full_response = ""
+                                 t2i_buffer = ""
                         elif len(t2i_buffer) > 20 and not (t2i_buffer.strip().startswith("[T2I_REQUEST:") or t2i_buffer.strip().startswith("[TTS_REQUEST:") or t2i_buffer.strip().startswith("[Text to speak:")):
                             # Not a valid marker start
                              yield f"data: {json.dumps({'type': 'content', 'content': t2i_buffer})}\n\n"
