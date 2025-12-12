@@ -163,14 +163,15 @@ async def send_message(
     
     # Enhance system prompt for T2I intent detection
     t2i_instruction = (
-        "\n\nIf the user explicitly asks to generate, create, draw, or make an image/picture/photo, "
+        "\n\nIf and ONLY IF the user explicitly asks to generate, create, draw, or make an image/picture/photo, "
         "respond ONLY with the following format:\n"
         "[T2I_REQUEST: <detailed prompt for image generation>]\n\n"
-        "If the user explicitly asks to speak, say, read aloud, or generate audio/voice/speech, "
+        "If and ONLY IF the user explicitly asks to speak, say, read aloud, or generate audio/voice/speech, "
         "respond ONLY with the following format:\n"
         "[TTS_REQUEST: <text to speak>]\n\n"
-        "Enhance the user's request into a detailed, high-quality image generation prompt OR clean text to speak. "
-        "Do not provide any other text response for these specific requests.\n"
+        "For all other queries, including questions about capabilities (e.g., 'Can you generate images?', 'Can vLLM deploy multiple models?'), "
+        "respond normally with text and DO NOT use the tags above.\n"
+        "Enhance the user's request into a detailed, high-quality image generation prompt OR clean text to speak ONLY when the intent is clearly a generation request.\n"
         "IMPORTANT: You CANNOT generate audio or images directly. NEVER output '[Audio](...)' or '![Image](...)' links yourself. "
         "ALWAYS use the [T2I_REQUEST: ...] or [TTS_REQUEST: ...] tags to trigger the generation."
     )
