@@ -309,25 +309,31 @@ class ChatManager {
                                         `;
                                     }
                                 } else if (data.type === 'audio_generated') {
-                                    // Received generated audio
-                                    const grid = messageEl.querySelector('.generated-images-grid'); // Reusing grid container for now or create new
-                                    // Actually, audio should probably be inline or below
-                                    // Let's create a dedicated audio container if it doesn't exist
-                                    let audioFn = messageEl.querySelector('.audio-container');
-                                    if (!audioFn) {
-                                        audioFn = document.createElement('div');
-                                        audioFn.className = 'audio-container';
-                                        // Insert before actions
-                                        const actions = messageEl.querySelector('.message-actions');
-                                        messageEl.insertBefore(audioFn, actions);
-                                    }
+                                    try {
+                                        let audioFn = messageEl.querySelector('.audio-container');
+                                        if (!audioFn) {
+                                            audioFn = document.createElement('div');
+                                            audioFn.className = 'audio-container';
 
-                                    audioFn.innerHTML += `
-                                        <div class="generated-audio-wrapper">
-                                            <div class="audio-label">🔊 ${data.text.length > 30 ? data.text.substring(0, 30) + '...' : data.text}</div>
-                                            <audio controls src="${data.url}" class="generated-audio"></audio>
-                                        </div>
-                                    `;
+                                            const actions = messageEl.querySelector('.message-actions');
+                                            if (actions && actions.parentNode) {
+                                                actions.parentNode.insertBefore(audioFn, actions);
+                                            } else {
+                                                const contentWrapper = messageEl.querySelector('.message-text')?.parentNode || messageEl;
+                                                contentWrapper.appendChild(audioFn);
+                                            }
+                                        }
+
+                                        const safeText = (data.text || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                                        const shortText = safeText.length > 50 ? safeText.substring(0, 50) + '...' : safeText;
+
+                                        audioFn.innerHTML += `
+                                            <div class="generated-audio-wrapper">
+                                                <div class="audio-label">🔊 ${shortText}</div>
+                                                <audio controls src="${data.url}" class="generated-audio"></audio>
+                                            </div>
+                                        `;
+                                    } catch (e) { console.error("Audio render error:", e); }
                                 } else if (data.type === 'done') {
                                     messageId = data.message_id;
                                     conversationId = data.conversation_id;
