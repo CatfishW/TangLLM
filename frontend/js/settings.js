@@ -312,8 +312,9 @@ class SettingsManager {
                         <div class="settings-description">Choose your preferred color scheme</div>
                     </div>
                     <select id="theme" class="input" style="width: auto;">
-                        <option value="dark" ${this.settings?.theme === 'dark' ? 'selected' : ''}>Dark</option>
+                        <option value="grok" ${this.settings?.theme === 'grok' || !this.settings?.theme || this.settings?.theme === 'dark' ? 'selected' : ''}>Grok (Dark)</option>
                         <option value="light" ${this.settings?.theme === 'light' ? 'selected' : ''}>Light</option>
+                        <option value="rowan" ${this.settings?.theme === 'rowan' ? 'selected' : ''}>Rowan University</option>
                     </select>
                 </div>
             </div>
