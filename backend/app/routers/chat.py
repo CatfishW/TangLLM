@@ -200,103 +200,119 @@ async def send_message(
             # T2I Buffering variables
             t2i_buffer = ""
             checking_for_marker = True
-            marker_detected = False
             
-            try:
-                async for chunk in llm_service.chat_stream(
-                    conversation_history,
-                    chat_request.content,
-                    system_prompt=system_prompt,
-                    temperature=temperature,
-                    max_tokens=max_tokens,
-                    enable_thinking=enable_thinking
-                ):
-                    # Check for thinking blocks first
-                    if "<think>" in chunk or "</think>" in chunk:
-                         full_response += chunk
-                         yield f"data: {json.dumps({'type': 'content', 'content': chunk})}\n\n"
-                         
-                         # Parse thinking mode disable - if we see thinking tags, disable T2I check
-                         if checking_for_marker:
-                             checking_for_marker = False
-                             if t2i_buffer:
-                                 yield f"data: {json.dumps({'type': 'content', 'content': t2i_buffer})}\n\n"
-                                 full_response += t2i_buffer
-                                 t2i_buffer = ""
-                         continue
-
-                    # If we are checking for marker
-                    if checking_for_marker:
-                        t2i_buffer += chunk
-                        clean_buffer = t2i_buffer.lstrip()
-                        
-                        # Check start
-                        if clean_buffer.startswith("[T2I_REQUEST:") or clean_buffer.startswith("[TTS_REQUEST:"):
-                            marker_detected = True
-                            checking_for_marker = False # Switch to capture mode
-                        # If buffer is long enough and doesn't start with marker prefix
-                        elif len(clean_buffer) > 20 and not ("[T2I_REQUEST:".startswith(clean_buffer[:10]) or "[TTS_REQUEST:".startswith(clean_buffer[:10])):
-                            # Flush buffer
-                            yield f"data: {json.dumps({'type': 'content', 'content': t2i_buffer})}\n\n"
-                            full_response += t2i_buffer
-                            t2i_buffer = ""
-                            checking_for_marker = False
-                        # Else continue buffering
-                    elif marker_detected:
-                        t2i_buffer += chunk # Accumulate prompt
-                    else:
-                        # Normal streaming
-                        full_response += chunk
-                        yield f"data: {json.dumps({'type': 'content', 'content': chunk})}\n\n"
-                    
-                    await asyncio.sleep(0)
+            async for chunk in llm_service.chat_stream(
+                conversation_history,
+                chat_request.content,
+                system_prompt=system_prompt,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                enable_thinking=enable_thinking
+            ):
+                content = chunk
                 
-                # End of stream processing
-                if marker_detected or (checking_for_marker and (t2i_buffer.strip().startswith("[T2I_REQUEST:") or t2i_buffer.strip().startswith("[TTS_REQUEST:"))):
-                    full_param = t2i_buffer.strip()
-                    
-                    # --- T2I Handling ---
-                    if "[T2I_REQUEST:" in full_param:
-                        prefix = "[T2I_REQUEST:"
-                        start_idx = full_param.find(prefix)
-                        if start_idx != -1:
-                            content_after = full_param[start_idx + len(prefix):].strip()
-                            if content_after.endswith("]"): content_after = content_after[:-1].strip()
-                            prompt = content_after
-                            
-                            if prompt:
+                # Check for <think> tags to disable/enable marker checking
+                if "<think>" in content:
+                    checking_for_marker = False
+                    yield f"data: {json.dumps({'type': 'content', 'content': content})}\n\n"
+                    full_response += content
+                    continue
+                
+                if "</think>" in content:
+                    checking_for_marker = True
+                    yield f"data: {json.dumps({'type': 'content', 'content': content})}\n\n"
+                    full_response += content
+                    continue
+                
+                if not checking_for_marker:
+                    yield f"data: {json.dumps({'type': 'content', 'content': content})}\n\n"
+                    full_response += content
+                    continue
+                
+                t2i_buffer += content
+                
+                # Check if buffer contains a potential marker start
+                # Updated to handle [Text to speak: hallucination
+                is_marker_potential = "[" in t2i_buffer
+                
+                # Check if we have a complete marker or if we should flush
+                # We should flush if the buffer gets too long without a marker, OR if it clearly doesn't validly start with one
+                # But we must be careful not to split [T2...
+                
+                has_marker = "[T2I_REQUEST:" in t2i_buffer or "[TTS_REQUEST:" in t2i_buffer or "[Text to speak:" in t2i_buffer
+                
+                if has_marker:
+                    # We have a confirmed marker! Keep buffering until we find the closing bracket ]
+                    if "]" in t2i_buffer:
+                        # Process the command
+                        full_param = t2i_buffer.strip()
+                        
+                        # --- T2I Handling ---
+                        if "[T2I_REQUEST:" in full_param:
+                            start_idx = full_param.find("[T2I_REQUEST:")
+                            if start_idx != -1:
+                                prompt = full_param[start_idx + 13:].strip()
+                                if prompt.endswith("]"): prompt = prompt[:-1].strip()
+                                
+                                # Send progress update
                                 progress_msg = f"Generating image for: **{prompt}**..."
                                 yield f"data: {json.dumps({'type': 'content', 'content': progress_msg})}\n\n"
                                 
+                                # Call T2I Service
                                 t2i_service_inst = T2IService()
-                                result = await t2i_service_inst.generate_image(prompt, current_user.id)
-                                
-                                if result["success"]:
+                                try:
+                                    # Check for annotation image in context
+                                    ref_image_path = None
+                                    if annotation_media_type == "image" and annotation_media_url:
+                                         if "/api/files/" in annotation_media_url:
+                                            # Extract local path from URL
+                                            # URL format: .../api/files/{user_id}/{filename}
+                                            import re
+                                            match = re.search(r'/api/files/(\d+)/([^/]+)$', annotation_media_url)
+                                            if match:
+                                                f_uid = match.group(1)
+                                                f_name = match.group(2)
+                                                # Need to find where uploads are stored. Using file_service logic.
+                                                # Assuming settings.UPLOAD_DIR
+                                                file_path = os.path.join(settings.UPLOAD_DIR, f_uid, f_name)
+                                                if os.path.exists(file_path):
+                                                    ref_image_path = file_path
+
+                                    # Generate
+                                    # If we have a ref image, use img2img (controlled generation not fully impl yet, but let's pass it if service supports)
+                                    # For now service.generate_image only takes prompt. 
+                                    # We will stick to txt2img unless service updated.
+                                    result = await t2i_service_inst.generate_image(prompt, current_user.id)
+                                    
+                                    # Send result
                                     yield f"data: {json.dumps({'type': 'image_generated', 'url': result['url'], 'prompt': prompt})}\n\n"
                                     full_response = f"Generated image for: {prompt}\n![{prompt}]({result['url']})"
-                                else:
-                                    err_msg = f"\nFailed to generate image: {result.get('error')}"
+                                    
+                                except Exception as e:
+                                    err_msg = f"\n\nError generating image: {str(e)}"
                                     yield f"data: {json.dumps({'type': 'content', 'content': err_msg})}\n\n"
                                     full_response = f"Request: {prompt}\n{err_msg}"
                             else:
                                 yield f"data: {json.dumps({'type': 'content', 'content': t2i_buffer})}\n\n"
                                 full_response += t2i_buffer
-                        else:
-                            yield f"data: {json.dumps({'type': 'content', 'content': t2i_buffer})}\n\n"
-                            full_response += t2i_buffer
-
-                    # --- TTS Handling ---
-                    elif "[TTS_REQUEST:" in full_param:
-                        prefix = "[TTS_REQUEST:"
-                        start_idx = full_param.find(prefix)
-                        if start_idx != -1:
-                            content_after = full_param[start_idx + len(prefix):].strip()
-                            if content_after.endswith("]"): content_after = content_after[:-1].strip()
-                            tts_text = content_after
-                            
-                            if tts_text:
-                                progress_msg = f"Generating audio for: **{tts_text}**..."
-                                yield f"data: {json.dumps({'type': 'content', 'content': progress_msg})}\n\n"
+                        
+                        # --- TTS Handling ---
+                        elif "[TTS_REQUEST:" in full_param or "[Text to speak:" in full_param:
+                            # Normalize marker
+                            if "[TTS_REQUEST:" in full_param:
+                                prefix = "[TTS_REQUEST:"
+                            else:
+                                prefix = "[Text to speak:"
+                                
+                            start_idx = full_param.find(prefix)
+                            if start_idx != -1:
+                                content_after = full_param[start_idx + len(prefix):].strip()
+                                if content_after.endswith("]"): content_after = content_after[:-1].strip()
+                                tts_text = content_after
+                                
+                                if tts_text:
+                                    progress_msg = f"Generating audio for: **{tts_text}**..."
+                                    yield f"data: {json.dumps({'type': 'content', 'content': progress_msg})}\n\n"
                                 
                                 # Check for uploaded audio file to use as voice
                                 voice_path = None
