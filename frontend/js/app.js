@@ -74,7 +74,13 @@ async function renderApp() {
                             <div class="user-name">${authManager.getUser()?.full_name || authManager.getUser()?.username}</div>
                             <div class="user-subtext">Free Plan</div>
                         </div>
-                        <span class="user-menu-icon">⋯</span>
+                        <span class="user-menu-icon">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="1"></circle>
+                                <circle cx="19" cy="12" r="1"></circle>
+                                <circle cx="5" cy="12" r="1"></circle>
+                            </svg>
+                        </span>
                     </div>
                     
                     <div class="dropdown-menu user-dropdown-menu">
@@ -84,14 +90,27 @@ async function renderApp() {
                         </div>
                         <div class="dropdown-divider"></div>
                         <button class="dropdown-item" onclick="settingsManager.openSettings()">
-                            ⚙️ Settings
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;">
+                                <circle cx="12" cy="12" r="3"></circle>
+                                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                            </svg>
+                            Settings
                         </button>
                         <button class="dropdown-item item-danger" onclick="chatManager.clearAllHistory()">
-                            🗑️ Clear All History
+                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                            Clear All History
                         </button>
                         <div class="dropdown-divider"></div>
                         <button class="dropdown-item" onclick="authManager.logout(); renderAuthPage();">
-                            🚪 Sign Out
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                <polyline points="16 17 21 12 16 7"></polyline>
+                                <line x1="21" y1="12" x2="9" y2="12"></line>
+                            </svg>
+                            Sign Out
                         </button>
                     </div>
                 </div>
@@ -100,7 +119,11 @@ async function renderApp() {
         
         <!-- Toggle Sidebar Button -->
         <button class="toggle-sidebar-btn" id="toggle-sidebar" onclick="toggleSidebar()">
-            ☰
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
         </button>
         
         <!-- Main Content -->
@@ -144,7 +167,12 @@ async function renderApp() {
 
 function toggleSidebar() {
     const app = document.getElementById('app');
-    app.classList.toggle('sidebar-collapsed');
+
+    if (window.innerWidth <= 768) {
+        app.classList.toggle('sidebar-open');
+    } else {
+        app.classList.toggle('sidebar-collapsed');
+    }
 }
 
 function setupDropdown() {

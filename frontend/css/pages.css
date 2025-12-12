@@ -1172,7 +1172,7 @@
 
 /* ============= Settings Modal ============= */
 .settings-section {
-    margin-bottom: var(--space-6);
+    margin-bottom: var(--space-8);
 }
 
 .settings-section:last-child {
@@ -1192,7 +1192,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: var(--space-3) 0;
+    padding: var(--space-4) 0;
 }
 
 .settings-row+.settings-row {
@@ -1221,6 +1221,8 @@
 
     .app.sidebar-open .sidebar {
         transform: translateX(0);
+        z-index: 1000;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
     }
 
     .welcome-suggestions {

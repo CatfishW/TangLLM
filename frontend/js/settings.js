@@ -61,7 +61,12 @@ class SettingsManager {
         modal.innerHTML = `
             <div class="modal-header">
                 <h3 class="modal-title">Settings</h3>
-                <button class="modal-close" onclick="settingsManager.closeSettings()">✕</button>
+                <button class="modal-close" onclick="settingsManager.closeSettings()">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
             </div>
             
             <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
@@ -247,7 +252,11 @@ class SettingsManager {
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <label class="input-label" for="model-id">Model</label>
                         <button class="btn btn-ghost btn-sm" onclick="settingsManager.loadModels(event)" style="font-size: var(--text-xs); padding: 2px 8px;">
-                            🔄 Refresh
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;">
+                                <path d="M23 4v6h-6"></path>
+                                <path d="M1 20v-6h6"></path>
+                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                            </svg> Refresh
                         </button>
                     </div>
                     <select id="model-id" class="input" style="width: 100%;">

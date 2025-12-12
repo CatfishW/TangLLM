@@ -478,15 +478,30 @@ class ChatManager {
                 <div class="generated-images-grid"></div>
                 <div class="message-actions">
                     <button class="message-action-btn" onclick="chatManager.copyMessage(this)" title="Copy">
-                        📋 Copy
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
                     </button>
                     ${!isUser ? `
                     <button class="message-action-btn" onclick="chatManager.speakMessage(this)" title="Speak">
-                        🔊 Speak
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                        </svg>
+                    </button>
+                    <button class="message-action-btn" onclick="chatManager.regenerateMessage(this)" title="Regenerate">
+                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="23 4 23 10 17 10"></polyline>
+                            <polyline points="1 20 1 14 7 14"></polyline>
+                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                        </svg>
                     </button>
                     ` : ''}
                     <button class="message-action-btn" onclick="chatManager.bookmarkMessage(this)" title="Bookmark">
-                        ⭐ Bookmark
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                           <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                        </svg>
                     </button>
                 </div>
             </div>
@@ -731,7 +746,11 @@ class ChatManager {
         sidebarContent.innerHTML = `
             <div style="padding: 0 var(--space-4);">
                 <button class="new-chat-btn" onclick="chatManager.createNewChat()">
-                    <span>+</span> New Chat
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    New Chat
                 </button>
             </div>
             
@@ -743,10 +762,20 @@ class ChatManager {
                             <span class="conversation-item-title">${utils.escapeHtml(conv.title)}</span>
                         </button>
                         <div class="conversation-menu dropdown">
-                            <button class="conversation-menu-btn" onclick="chatManager.toggleContextMenu(event, ${conv.id})">⋮</button>
+                            <button class="conversation-menu-btn" onclick="chatManager.toggleContextMenu(event, ${conv.id})">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="1"></circle>
+                                    <circle cx="12" cy="5" r="1"></circle>
+                                    <circle cx="12" cy="19" r="1"></circle>
+                                </svg>
+                            </button>
                             <div class="dropdown-menu" id="ctx-menu-${conv.id}">
                                 <button class="dropdown-item item-delete" onclick="chatManager.deleteConversation(${conv.id})">
-                                    <span class="icon">🗑️</span> Delete
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;">
+                                        <polyline points="3 6 5 6 21 6"></polyline>
+                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                    </svg>
+                                    Delete
                                 </button>
                             </div>
                         </div>
@@ -1013,7 +1042,9 @@ class ChatManager {
                     <div class="chat-input-row">
                         <div class="chat-input-actions">
                             <button class="btn btn-ghost btn-icon" onclick="document.getElementById('file-input').click()" title="Upload file">
-                                📎
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+                                </svg>
                             </button>
                             <button class="btn btn-ghost btn-icon" id="voice-btn" onclick="chatManager.toggleVoiceInput()" title="Voice input">
                                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1034,7 +1065,10 @@ class ChatManager {
                                   onkeydown="if(event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); chatManager.sendMessage(); }"></textarea>
                         
                         <button class="send-btn" id="send-btn" onclick="chatManager.sendMessage()" title="Send">
-                            ➤
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="22" y1="2" x2="11" y2="13"></line>
+                                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                            </svg>
                         </button>
                     </div>
                 </div>
