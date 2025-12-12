@@ -392,6 +392,10 @@ async def send_message(
                          t2i_buffer = ""
                          
                 # End of loop
+                if t2i_buffer:
+                     yield f"data: {json.dumps({'type': 'content', 'content': t2i_buffer})}\n\n"
+                     full_response += t2i_buffer
+
                 
                 # Save assistant message
                 assistant_message = Message(
