@@ -78,7 +78,7 @@ class T2IService:
                 async with session.post(
                     f"{self.api_base}/generate",
                     json=payload,
-                    timeout=aiohttp.ClientTimeout(total=120)  # 2 min timeout for generation
+                    timeout=aiohttp.ClientTimeout(total=600)  # 10 min timeout for generation
                 ) as response:
                     if response.status != 200:
                         error_text = await response.text()
@@ -94,7 +94,7 @@ class T2IService:
                     if not image_base64:
                         return {
                             "success": False,
-                            "error": "No image data in response"
+                            "error": f"No image data in response. Keys: {list(data.keys())}"
                         }
                     
                     # Save the image to uploads directory
