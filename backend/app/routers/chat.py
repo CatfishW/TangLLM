@@ -249,32 +249,46 @@ async def send_message(
                 if marker_detected or (checking_for_marker and t2i_buffer.strip().startswith("[T2I_REQUEST:")):
                     # Parse prompt from buffer
                     full_param = t2i_buffer.strip()
-                    match = re.search(r'\[T2I_REQUEST:\s*(.*?)\]?', full_param, re.DOTALL)
+                    # Use string manipulation instead of regex to be more robust
+                    prefix = "[T2I_REQUEST:"
                     
-                    if match:
-                        prompt = match.group(1).strip()
-                        if prompt.endswith(']'): prompt = prompt[:-1]
+                    # Find start of prefix ignoring whitespace
+                    start_idx = full_param.find(prefix)
+                    if start_idx != -1:
+                        # Extract content after prefix
+                        content_after = full_param[start_idx + len(prefix):].strip()
                         
-                        # Notify frontend
-                        progress_msg = f"Generating image for: **{prompt}**..."
-                        yield f"data: {json.dumps({'type': 'content', 'content': progress_msg})}\n\n"
+                        # Remove trailing ] if present
+                        if content_after.endswith("]"):
+                            content_after = content_after[:-1].strip()
                         
-                        # Call T2I Service (imported globally)
-                        t2i_service_inst = T2IService()
-                        result = await t2i_service_inst.generate_image(prompt, current_user.id)
+                        prompt = content_after
                         
-                        if result["success"]:
-                            # Send special image event
-                            yield f"data: {json.dumps({'type': 'image_generated', 'url': result['url'], 'prompt': prompt})}\n\n"
+                        if prompt:
+                            # Notify frontend
+                            progress_msg = f"Generating image for: **{prompt}**..."
+                            yield f"data: {json.dumps({'type': 'content', 'content': progress_msg})}\n\n"
                             
-                            # Final full_response for history
-                            full_response = f"Generated image for: {prompt}\n![{prompt}]({result['url']})"
+                            # Call T2I Service (imported globally)
+                            t2i_service_inst = T2IService()
+                            result = await t2i_service_inst.generate_image(prompt, current_user.id)
+                            
+                            if result["success"]:
+                                # Send special image event
+                                yield f"data: {json.dumps({'type': 'image_generated', 'url': result['url'], 'prompt': prompt})}\n\n"
+                                
+                                # Final full_response for history
+                                full_response = f"Generated image for: {prompt}\n![{prompt}]({result['url']})"
+                            else:
+                                err_msg = f"\nFailed to generate image: {result.get('error')}"
+                                yield f"data: {json.dumps({'type': 'content', 'content': err_msg})}\n\n"
+                                full_response = f"Request: {prompt}\n{err_msg}"
                         else:
-                            err_msg = f"\nFailed to generate image: {result.get('error')}"
-                            yield f"data: {json.dumps({'type': 'content', 'content': err_msg})}\n\n"
-                            full_response = f"Request: {prompt}\n{err_msg}"
+                            # Empty prompt
+                            yield f"data: {json.dumps({'type': 'content', 'content': t2i_buffer})}\n\n"
+                            full_response += t2i_buffer
                     else:
-                        # Malformed
+                        # Malformed or not found
                         yield f"data: {json.dumps({'type': 'content', 'content': t2i_buffer})}\n\n"
                         full_response += t2i_buffer
                         
