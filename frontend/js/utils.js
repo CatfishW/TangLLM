@@ -309,6 +309,9 @@ function parseMarkdown(text) {
     // Italic
     html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
 
+    // Audio links [Audio](url)
+    html = html.replace(/\[Audio\]\(([^)]+)\)/g, '<div class="generated-audio-wrapper" style="margin-top: 8px;"><audio controls src="$1" class="generated-audio" style="width: 100%;"></audio></div>');
+
     // Links
     html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
 
