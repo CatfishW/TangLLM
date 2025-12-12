@@ -837,34 +837,49 @@ class ChatManager {
                 <div class="welcome-screen">
                     <div class="thinking-mode-selector welcome-mode-selector" id="thinking-mode-selector">
                         <button class="thinking-mode-btn" onclick="chatManager.toggleThinkingModeMenu()">
-                            <span class="thinking-mode-icon">${thinkingMode === 'fast' ? '⚡' : thinkingMode === 'thinking' ? '🧠' : '🤖'}</span>
+                            <span class="thinking-mode-icon">
+                                ${thinkingMode === 'fast' ?
+                    `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>` :
+                    thinkingMode === 'thinking' ?
+                        `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line><line x1="8" y1="22" x2="16" y2="22"></line></svg>` :
+                        `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"></rect><circle cx="12" cy="5" r="2"></circle><path d="M12 7v4"></path><line x1="8" y1="16" x2="8" y2="16"></line><line x1="16" y1="16" x2="16" y2="16"></line></svg>`
+                }
+                            </span>
                             <span class="thinking-mode-label">TangLLM ${thinkingMode === 'fast' ? 'Fast' : thinkingMode === 'thinking' ? 'Thinking' : 'Auto'}</span>
-                            <span class="thinking-mode-chevron">▼</span>
+                            <span class="thinking-mode-chevron">
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </span>
                         </button>
                         <div class="thinking-mode-menu" id="thinking-mode-menu">
                             <div class="thinking-mode-option ${thinkingMode === 'auto' ? 'active' : ''}" onclick="chatManager.setThinkingMode('auto')">
-                                <span class="option-icon">🤖</span>
+                                <span class="option-icon">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"></rect><circle cx="12" cy="5" r="2"></circle><path d="M12 7v4"></path><line x1="8" y1="16" x2="8" y2="16"></line><line x1="16" y1="16" x2="16" y2="16"></line></svg>
+                                </span>
                                 <div class="option-content">
                                     <span class="option-title">TangLLM Auto</span>
                                     <span class="option-desc">Automatically decides when to think</span>
                                 </div>
-                                ${thinkingMode === 'auto' ? '<span class="option-check">✓</span>' : ''}
+                                ${thinkingMode === 'auto' ? '<span class="option-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>' : ''}
                             </div>
                             <div class="thinking-mode-option ${thinkingMode === 'fast' ? 'active' : ''}" onclick="chatManager.setThinkingMode('fast')">
-                                <span class="option-icon">⚡</span>
+                                <span class="option-icon">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                </span>
                                 <div class="option-content">
                                     <span class="option-title">TangLLM Fast</span>
                                     <span class="option-desc">Quick responses, no deep thinking</span>
                                 </div>
-                                ${thinkingMode === 'fast' ? '<span class="option-check">✓</span>' : ''}
+                                ${thinkingMode === 'fast' ? '<span class="option-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>' : ''}
                             </div>
                             <div class="thinking-mode-option ${thinkingMode === 'thinking' ? 'active' : ''}" onclick="chatManager.setThinkingMode('thinking')">
-                                <span class="option-icon">🧠</span>
+                                <span class="option-icon">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line><line x1="8" y1="22" x2="16" y2="22"></line></svg>
+                                </span>
                                 <div class="option-content">
                                     <span class="option-title">TangLLM Thinking</span>
                                     <span class="option-desc">Extended reasoning for complex tasks</span>
                                 </div>
-                                ${thinkingMode === 'thinking' ? '<span class="option-check">✓</span>' : ''}
+                                ${thinkingMode === 'thinking' ? '<span class="option-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>' : ''}
                             </div>
                         </div>
                     </div>
@@ -881,22 +896,30 @@ class ChatManager {
                     
                     <div class="welcome-suggestions">
                         <div class="suggestion-card" onclick="chatManager.useSuggestion('Explain quantum computing in simple terms')">
-                            <div class="suggestion-icon">💡</div>
+                            <div class="suggestion-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"></path><path d="M10 22h4"></path><path d="M15.09 14c.18-.9.66-1.74 1.41-2.33A4.5 4.5 0 0 0 10 5c-3 0-5.32 2.87-4.5 5.92.54 2 2.22 3.6 4.3 4.08"></path></svg>
+                            </div>
                             <div class="suggestion-title">Explain a concept</div>
                             <div class="suggestion-desc">Learn about complex topics</div>
                         </div>
                         <div class="suggestion-card" onclick="chatManager.useSuggestion('Help me write a professional email')">
-                            <div class="suggestion-icon">✍️</div>
+                            <div class="suggestion-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path><path d="M2 2l7.586 7.586"></path><circle cx="11" cy="11" r="2"></circle></svg>
+                            </div>
                             <div class="suggestion-title">Write content</div>
                             <div class="suggestion-desc">Emails, essays, and more</div>
                         </div>
                         <div class="suggestion-card" onclick="chatManager.useSuggestion('Analyze this image and describe what you see')">
-                            <div class="suggestion-icon">🖼️</div>
+                            <div class="suggestion-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                            </div>
                             <div class="suggestion-title">Analyze images</div>
                             <div class="suggestion-desc">Upload and analyze visuals</div>
                         </div>
                         <div class="suggestion-card" onclick="chatManager.useSuggestion('Review this code and suggest improvements')">
-                            <div class="suggestion-icon">💻</div>
+                            <div class="suggestion-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+                            </div>
                             <div class="suggestion-title">Code assistance</div>
                             <div class="suggestion-desc">Debug and improve code</div>
                         </div>
@@ -913,34 +936,49 @@ class ChatManager {
                     <div class="chat-header-left">
                         <div class="thinking-mode-selector" id="thinking-mode-selector">
                             <button class="thinking-mode-btn" onclick="chatManager.toggleThinkingModeMenu()">
-                                <span class="thinking-mode-icon">${thinkingMode === 'fast' ? '⚡' : thinkingMode === 'thinking' ? '🧠' : '🤖'}</span>
+                                <span class="thinking-mode-icon">
+                                    ${thinkingMode === 'fast' ?
+                    `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>` :
+                    thinkingMode === 'thinking' ?
+                        `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line><line x1="8" y1="22" x2="16" y2="22"></line></svg>` :
+                        `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"></rect><circle cx="12" cy="5" r="2"></circle><path d="M12 7v4"></path><line x1="8" y1="16" x2="8" y2="16"></line><line x1="16" y1="16" x2="16" y2="16"></line></svg>`
+                }
+                                </span>
                                 <span class="thinking-mode-label">TangLLM ${thinkingMode === 'fast' ? 'Fast' : thinkingMode === 'thinking' ? 'Thinking' : 'Auto'}</span>
-                                <span class="thinking-mode-chevron">▼</span>
+                                <span class="thinking-mode-chevron">
+                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                </span>
                             </button>
                             <div class="thinking-mode-menu" id="thinking-mode-menu">
                                 <div class="thinking-mode-option ${thinkingMode === 'auto' ? 'active' : ''}" onclick="chatManager.setThinkingMode('auto')">
-                                    <span class="option-icon">🤖</span>
+                                    <span class="option-icon">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"></rect><circle cx="12" cy="5" r="2"></circle><path d="M12 7v4"></path><line x1="8" y1="16" x2="8" y2="16"></line><line x1="16" y1="16" x2="16" y2="16"></line></svg>
+                                    </span>
                                     <div class="option-content">
                                         <span class="option-title">TangLLM Auto</span>
                                         <span class="option-desc">Automatically decides when to think</span>
                                     </div>
-                                    ${thinkingMode === 'auto' ? '<span class="option-check">✓</span>' : ''}
+                                    ${thinkingMode === 'auto' ? '<span class="option-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>' : ''}
                                 </div>
                                 <div class="thinking-mode-option ${thinkingMode === 'fast' ? 'active' : ''}" onclick="chatManager.setThinkingMode('fast')">
-                                    <span class="option-icon">⚡</span>
+                                    <span class="option-icon">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                    </span>
                                     <div class="option-content">
                                         <span class="option-title">TangLLM Fast</span>
                                         <span class="option-desc">Quick responses, no deep thinking</span>
                                     </div>
-                                    ${thinkingMode === 'fast' ? '<span class="option-check">✓</span>' : ''}
+                                    ${thinkingMode === 'fast' ? '<span class="option-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>' : ''}
                                 </div>
                                 <div class="thinking-mode-option ${thinkingMode === 'thinking' ? 'active' : ''}" onclick="chatManager.setThinkingMode('thinking')">
-                                    <span class="option-icon">🧠</span>
+                                    <span class="option-icon">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line><line x1="8" y1="22" x2="16" y2="22"></line></svg>
+                                    </span>
                                     <div class="option-content">
                                         <span class="option-title">TangLLM Thinking</span>
                                         <span class="option-desc">Extended reasoning for complex tasks</span>
                                     </div>
-                                    ${thinkingMode === 'thinking' ? '<span class="option-check">✓</span>' : ''}
+                                    ${thinkingMode === 'thinking' ? '<span class="option-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>' : ''}
                                 </div>
                             </div>
                         </div>

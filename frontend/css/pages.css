@@ -1007,6 +1007,11 @@
     flex-shrink: 0;
 }
 
+.send-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
 .send-btn:hover:not(:disabled) {
     transform: scale(1.05);
     box-shadow: var(--shadow-glow);
