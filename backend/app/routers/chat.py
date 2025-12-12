@@ -229,11 +229,11 @@ async def send_message(
                         clean_buffer = t2i_buffer.lstrip()
                         
                         # Check start
-                        if clean_buffer.startswith("[T2I_REQUEST:"):
+                        if clean_buffer.startswith("[T2I_REQUEST:") or clean_buffer.startswith("[TTS_REQUEST:"):
                             marker_detected = True
                             checking_for_marker = False # Switch to capture mode
                         # If buffer is long enough and doesn't start with marker prefix
-                        elif len(clean_buffer) > 20 and not "[T2I_REQUEST:".startswith(clean_buffer[:10]):
+                        elif len(clean_buffer) > 20 and not ("[T2I_REQUEST:".startswith(clean_buffer[:10]) or "[TTS_REQUEST:".startswith(clean_buffer[:10])):
                             # Flush buffer
                             yield f"data: {json.dumps({'type': 'content', 'content': t2i_buffer})}\n\n"
                             full_response += t2i_buffer
