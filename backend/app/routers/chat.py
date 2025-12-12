@@ -161,26 +161,18 @@ async def send_message(
     temperature = float(user_settings.temperature) if user_settings else 0.7
     max_tokens = user_settings.max_tokens if user_settings else 4096
     
-    # Enhance system prompt for T2I/TTS intent detection - VERY RESTRICTIVE
+    # Enhance system prompt for T2I/TTS intent detection
     t2i_instruction = (
-        "\n\n=== SPECIAL CAPABILITIES (USE SPARINGLY) ==="
-        "\n\nYou have access to image generation and text-to-speech, but ONLY use them when the user EXPLICITLY and CLEARLY requests them."
-        "\n\n**Image Generation (T2I):**"
-        "\n- ONLY trigger when user uses phrases like: 'generate an image of', 'create a picture of', 'draw me', 'make an image showing'"
-        "\n- Format: [T2I_REQUEST: <detailed prompt>]"
-        "\n- DO NOT use for: questions about images, analyzing images, detecting objects, or any non-generation task"
-        "\n\n**Text-to-Speech (TTS):**"
-        "\n- ONLY trigger when user uses phrases like: 'read this aloud', 'speak this text', 'generate audio saying', 'say out loud'"
-        "\n- Format: [TTS_REQUEST: <text to speak>]"
-        "\n- The text MUST be at least 10 characters long"
-        "\n- DO NOT use for: normal conversation, explanations, or unless explicitly asked to generate speech"
-        "\n\n**CRITICAL RULES:**"
-        "\n- NEVER proactively suggest using these services or guide users toward them"
-        "\n- NEVER use these tags in normal conversation or when just answering questions"
-        "\n- If user asks 'can you generate images?' or 'can you speak?', just answer YES without actually generating"
-        "\n- For object detection tasks (detect, locate, find, segment), output bounding box coordinates [[x1,y1,x2,y2]], NOT [T2I_REQUEST]"
-        "\n- You CANNOT output media links directly. Only use the tags above when appropriate."
-        "\n\nWhen in doubt, respond with normal text. Only use these special capabilities when the user's intent is unmistakably clear."
+        "\n\n=== GENERATION CAPABILITIES ==="
+        "\n\nYou can generate images and audio when the user asks."
+        "\n\n**Image Generation:** When user asks to generate/create/draw an image, respond with: [T2I_REQUEST: <detailed prompt>]"
+        "\n**Text-to-Speech:** When user asks to speak/say/read aloud/generate audio, respond with: [TTS_REQUEST: <text to speak>]"
+        "\n\n**Rules:**"
+        "\n- Use these ONLY when user explicitly requests generation, not for normal conversation"
+        "\n- Do NOT explain how to use these features - just use them directly when asked"
+        "\n- Do NOT guide users toward these services or suggest using them"
+        "\n- For object detection (detect/find/locate), output bounding box coordinates, NOT [T2I_REQUEST]"
+        "\n- When user asks about capabilities, answer normally without triggering generation"
     )
     
     if system_prompt:
@@ -375,11 +367,13 @@ async def send_message(
                                         yield f"data: {json.dumps({'type': 'audio_generated', 'url': result['url'], 'text': tts_text})}\n\n"
                                         # Markdown audio player? Not standard. Use text link or message.
                                         # We'll rely on frontend specific event to render player.
-                                        full_response = f"Generated audio for: {tts_text}\n[Audio]({result['url']})"
+                                        full_response = f"🔊 {tts_text}"
+                                        t2i_buffer = ""  # Clear buffer after processing
                                     else:
                                         err_msg = f"\nFailed to generate audio: {result.get('error')}"
                                         yield f"data: {json.dumps({'type': 'content', 'content': err_msg})}\n\n"
-                                        full_response = f"Request: {tts_text}\n{err_msg}"
+                                        full_response = err_msg
+                                        t2i_buffer = ""  # Clear buffer after processing
                                 else:
                                     # Don't show raw tags to user
                                     full_response = ""
@@ -405,10 +399,12 @@ async def send_message(
                          full_response += t2i_buffer
                          t2i_buffer = ""
                          
-                # End of loop
+                # End of loop - flush remaining buffer but filter out raw tags
                 if t2i_buffer:
-                     yield f"data: {json.dumps({'type': 'content', 'content': t2i_buffer})}\n\n"
-                     full_response += t2i_buffer
+                    # Don't output raw T2I/TTS tags
+                    if not ("[T2I_REQUEST:" in t2i_buffer or "[TTS_REQUEST:" in t2i_buffer or "[Text to speak:" in t2i_buffer):
+                        yield f"data: {json.dumps({'type': 'content', 'content': t2i_buffer})}\n\n"
+                        full_response += t2i_buffer
 
                 
                 # Save assistant message
