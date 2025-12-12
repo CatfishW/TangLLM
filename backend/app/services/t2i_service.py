@@ -90,7 +90,7 @@ class T2IService:
                     data = await response.json()
                     
                     # The API returns base64 image data
-                    image_base64 = data.get("image")
+                    image_base64 = data.get("image_base64")
                     if not image_base64:
                         return {
                             "success": False,
