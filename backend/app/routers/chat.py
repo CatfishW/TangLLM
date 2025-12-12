@@ -170,7 +170,9 @@ async def send_message(
         "respond ONLY with the following format:\n"
         "[TTS_REQUEST: <text to speak>]\n\n"
         "Enhance the user's request into a detailed, high-quality image generation prompt OR clean text to speak. "
-        "Do not provide any other text response for these specific requests."
+        "Do not provide any other text response for these specific requests.\n"
+        "IMPORTANT: You CANNOT generate audio or images directly. NEVER output '[Audio](...)' or '![Image](...)' links yourself. "
+        "ALWAYS use the [T2I_REQUEST: ...] or [TTS_REQUEST: ...] tags to trigger the generation."
     )
     
     if system_prompt:
