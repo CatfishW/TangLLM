@@ -884,14 +884,9 @@ class ChatManager {
                         </div>
                     </div>
                     
-                    <div class="welcome-logo">
-                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
-                            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2"/>
-                            <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2"/>
-                            <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2"/>
-                        </svg>
+                    <div class="welcome-logo" style="background: none; width: auto; height: auto;">
+                        <img src="assets/rowan-logo.png" alt="Rowan University" style="height: 80px; width: auto;">
                     </div>
-                    <h1 class="welcome-title text-gradient">TangLLM</h1>
                     <p class="welcome-subtitle">How can I help you today?</p>
                     
                     <div class="welcome-suggestions">

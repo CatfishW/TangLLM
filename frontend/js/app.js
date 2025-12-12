@@ -51,14 +51,7 @@ async function renderApp() {
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="sidebar-logo">
-                    <div class="sidebar-logo-icon">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2"/>
-                            <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2"/>
-                            <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2"/>
-                        </svg>
-                    </div>
-                    <span class="sidebar-logo-text text-gradient">TangLLM</span>
+                    <img src="assets/rowan-logo.png" alt="Rowan University" class="sidebar-logo-image" style="height: 32px; width: auto;">
                 </div>
             </div>
             
