@@ -457,6 +457,14 @@ class ChatManager {
                     return `<div class="message-media"><img src="${file.url}" alt="Uploaded image"></div>`;
                 } else if (file.type === 'video') {
                     return `<div class="message-media"><video src="${file.url}" controls></video></div>`;
+                } else if (file.type === 'audio') {
+                    return `
+                    <div class="message-media" style="width: 100%; max-width: 400px;">
+                        <div class="generated-audio-wrapper">
+                            <div class="audio-label" style="font-size: 0.8em; margin-bottom: 4px; opacity: 0.8;">Uploaded: ${utils.escapeHtml(file.name || 'Audio')}</div>
+                            <audio src="${file.url}" controls class="generated-audio" style="width: 100%;"></audio>
+                        </div>
+                    </div>`;
                 }
                 return '';
             }).join('');
