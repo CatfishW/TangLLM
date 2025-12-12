@@ -161,25 +161,26 @@ async def send_message(
     temperature = float(user_settings.temperature) if user_settings else 0.7
     max_tokens = user_settings.max_tokens if user_settings else 4096
     
-    # Enhance system prompt for T2I intent detection
+    # Enhance system prompt for T2I/TTS intent detection - VERY RESTRICTIVE
     t2i_instruction = (
-        "\n\nIf and ONLY IF the user explicitly asks to generate, create, draw, or make an image/picture/photo, "
-        "respond ONLY with the following format:\n"
-        "[T2I_REQUEST: <detailed prompt for image generation>]\n\n"
-        "If and ONLY IF the user explicitly asks to speak, say, read aloud, or generate audio/voice/speech, "
-        "respond ONLY with the following format:\n"
-        "[TTS_REQUEST: <text to speak>]\n\n"
-        "If the user asks to DETECT, LOCATE, FIND, or SEGMENT objects in an image (e.g. 'detect cats', 'find the red car'), "
-        "you MUST output the bounding box coordinates in the format [[x1, y1, x2, y2]] for each object found. "
-        "Do NOT use [T2I_REQUEST] for detection tasks. Just output the coordinates and a brief description.\n\n"
-        "If the user provides feedback/critique (e.g. 'not enough', 'missed some', 'bad quality'), "
-        "respond by fixing the previous task (e.g. finding more objects) or asking for clarification. "
-        "DO NOT generate a new image unless explicitly asked.\n\n"
-        "For all other queries, including questions about capabilities (e.g., 'Can you generate images?', 'Can vLLM deploy multiple models?'), "
-        "respond normally with text and DO NOT use the tags above.\n"
-        "Enhance the user's request into a detailed, high-quality image generation prompt OR clean text to speak ONLY when the intent is clearly a generation request.\n"
-        "IMPORTANT: You CANNOT generate audio or images directly. NEVER output '[Audio](...)' or '![Image](...)' links yourself. "
-        "ALWAYS use the [T2I_REQUEST: ...] or [TTS_REQUEST: ...] tags to trigger the generation."
+        "\n\n=== SPECIAL CAPABILITIES (USE SPARINGLY) ==="
+        "\n\nYou have access to image generation and text-to-speech, but ONLY use them when the user EXPLICITLY and CLEARLY requests them."
+        "\n\n**Image Generation (T2I):**"
+        "\n- ONLY trigger when user uses phrases like: 'generate an image of', 'create a picture of', 'draw me', 'make an image showing'"
+        "\n- Format: [T2I_REQUEST: <detailed prompt>]"
+        "\n- DO NOT use for: questions about images, analyzing images, detecting objects, or any non-generation task"
+        "\n\n**Text-to-Speech (TTS):**"
+        "\n- ONLY trigger when user uses phrases like: 'read this aloud', 'speak this text', 'generate audio saying', 'say out loud'"
+        "\n- Format: [TTS_REQUEST: <text to speak>]"
+        "\n- The text MUST be at least 10 characters long"
+        "\n- DO NOT use for: normal conversation, explanations, or unless explicitly asked to generate speech"
+        "\n\n**CRITICAL RULES:**"
+        "\n- NEVER proactively suggest using these services or guide users toward them"
+        "\n- NEVER use these tags in normal conversation or when just answering questions"
+        "\n- If user asks 'can you generate images?' or 'can you speak?', just answer YES without actually generating"
+        "\n- For object detection tasks (detect, locate, find, segment), output bounding box coordinates [[x1,y1,x2,y2]], NOT [T2I_REQUEST]"
+        "\n- You CANNOT output media links directly. Only use the tags above when appropriate."
+        "\n\nWhen in doubt, respond with normal text. Only use these special capabilities when the user's intent is unmistakably clear."
     )
     
     if system_prompt:
@@ -317,6 +318,14 @@ async def send_message(
                                     content_after = full_param[start_idx + len(prefix):].strip()
                                     if content_after.endswith("]"): content_after = content_after[:-1].strip()
                                     tts_text = content_after
+                                    
+                                    # Validate TTS text length to prevent API errors
+                                    if len(tts_text.strip()) < 10:
+                                        err_msg = f"\nText too short for TTS (minimum 10 characters): '{tts_text}'"
+                                        yield f"data: {json.dumps({'type': 'content', 'content': err_msg})}\n\n"
+                                        full_response = err_msg
+                                        t2i_buffer = ""
+                                        continue
                                     
                                     if tts_text:
                                         progress_msg = f"Generating audio for: **{tts_text}**..."
