@@ -11,64 +11,51 @@
 
 /* ============= CSS Variables ============= */
 :root {
-    /* Rowan University Primary Colors */
-    --color-brown-900: #2A0A00;
-    --color-brown-800: #3F1A0A;
-    --color-brown-700: #5B1400;
-    --color-brown-600: #7A2A15;
-    --color-brown-500: #994020;
-    --color-brown-400: #B85A35;
-    --color-brown-300: #D4836A;
-    --color-brown-200: #E8B4A0;
-    --color-brown-100: #F5DCD0;
-    
-    --color-gold-900: #6B5200;
-    --color-gold-800: #9A7700;
-    --color-gold-700: #C99C00;
-    --color-gold-600: #E6B300;
-    --color-gold-500: #FFCE00;
-    --color-gold-400: #FFD633;
-    --color-gold-300: #FFDF66;
-    --color-gold-200: #FFE999;
-    --color-gold-100: #FFF4CC;
-    
+    /* Grok-Inspired Color Palette */
+
     /* Semantic Colors */
-    --color-primary: var(--color-gold-500);
-    --color-primary-hover: var(--color-gold-400);
-    --color-secondary: var(--color-brown-700);
-    --color-secondary-hover: var(--color-brown-600);
-    
+    --color-primary: #FFFFFF;
+    /* High contrast white for primary actions */
+    --color-primary-hover: #E0E0E0;
+    --color-secondary: #2C2C2C;
+    --color-secondary-hover: #3A3A3A;
+
     /* Background Colors */
-    --color-bg-primary: #0a0a0f;
-    --color-bg-secondary: #12121a;
-    --color-bg-tertiary: #1a1a25;
-    --color-bg-elevated: #222230;
-    --color-bg-glass: rgba(255, 206, 0, 0.03);
-    --color-bg-glass-hover: rgba(255, 206, 0, 0.08);
-    
+    /* Deep blacks and dark grays */
+    --color-bg-primary: #000000;
+    --color-bg-secondary: #0A0A0A;
+    --color-bg-tertiary: #161616;
+    --color-bg-elevated: #202020;
+    --color-bg-glass: rgba(255, 255, 255, 0.05);
+    --color-bg-glass-hover: rgba(255, 255, 255, 0.1);
+
     /* Text Colors */
-    --color-text-primary: #FEFEFE;
-    --color-text-secondary: rgba(254, 254, 254, 0.7);
-    --color-text-tertiary: rgba(254, 254, 254, 0.5);
-    --color-text-muted: rgba(254, 254, 254, 0.3);
-    
+    --color-text-primary: #FFFFFF;
+    --color-text-secondary: #A0A0A0;
+    --color-text-tertiary: #6E6E6E;
+    --color-text-muted: #404040;
+
     /* Border Colors */
-    --color-border: rgba(255, 206, 0, 0.1);
-    --color-border-hover: rgba(255, 206, 0, 0.2);
-    --color-border-active: rgba(255, 206, 0, 0.4);
-    
+    --color-border: #333333;
+    --color-border-hover: #555555;
+    --color-border-active: #FFFFFF;
+
     /* Status Colors */
-    --color-success: #22c55e;
-    --color-warning: #eab308;
-    --color-error: #ef4444;
-    --color-info: #3b82f6;
-    
+    --color-success: #10B981;
+    /* Emerald Green */
+    --color-warning: #F59E0B;
+    /* Amber */
+    --color-error: #EF4444;
+    /* Red */
+    --color-info: #3B82F6;
+    /* Blue */
+
     /* Typography */
-    --font-sans: 'Source Sans 3', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     --font-serif: 'Source Serif 4', Georgia, serif;
     --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
-    
-    /* Font Sizes */
+
+    /* Font Sizes (Unchanged) */
     --text-xs: 0.75rem;
     --text-sm: 0.875rem;
     --text-base: 1rem;
@@ -78,14 +65,14 @@
     --text-3xl: 1.875rem;
     --text-4xl: 2.25rem;
     --text-5xl: 3rem;
-    
+
     /* Font Weights */
     --font-light: 300;
     --font-normal: 400;
     --font-medium: 500;
     --font-semibold: 600;
     --font-bold: 700;
-    
+
     /* Spacing */
     --space-1: 0.25rem;
     --space-2: 0.5rem;
@@ -97,29 +84,29 @@
     --space-10: 2.5rem;
     --space-12: 3rem;
     --space-16: 4rem;
-    
-    /* Border Radius */
+
+    /* Border Radius - Cleaner, slightly sharper than before */
     --radius-sm: 0.25rem;
-    --radius-md: 0.5rem;
-    --radius-lg: 0.75rem;
-    --radius-xl: 1rem;
-    --radius-2xl: 1.5rem;
+    --radius-md: 0.375rem;
+    --radius-lg: 0.5rem;
+    --radius-xl: 0.75rem;
+    --radius-2xl: 1rem;
     --radius-full: 9999px;
-    
+
     /* Shadows */
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
-    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.4);
-    --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.5);
-    --shadow-glow: 0 0 20px rgba(255, 206, 0, 0.3);
-    --shadow-glow-lg: 0 0 40px rgba(255, 206, 0, 0.4);
-    
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.6);
+    --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.7);
+    --shadow-glow: 0 0 20px rgba(255, 255, 255, 0.1);
+    --shadow-glow-lg: 0 0 40px rgba(255, 255, 255, 0.15);
+
     /* Transitions */
     --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
     --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
     --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
     --transition-bounce: 500ms cubic-bezier(0.68, -0.55, 0.265, 1.55);
-    
+
     /* Z-Index */
     --z-base: 0;
     --z-dropdown: 100;
@@ -127,14 +114,16 @@
     --z-modal: 300;
     --z-tooltip: 400;
     --z-notification: 500;
-    
+
     /* Sidebar Width */
     --sidebar-width: 280px;
     --sidebar-collapsed-width: 0px;
 }
 
 /* ============= Base Styles ============= */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
@@ -159,19 +148,41 @@ body {
 }
 
 /* ============= Typography ============= */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
     font-family: var(--font-serif);
     font-weight: var(--font-bold);
     line-height: 1.3;
     color: var(--color-text-primary);
 }
 
-h1 { font-size: var(--text-5xl); }
-h2 { font-size: var(--text-4xl); }
-h3 { font-size: var(--text-3xl); }
-h4 { font-size: var(--text-2xl); }
-h5 { font-size: var(--text-xl); }
-h6 { font-size: var(--text-lg); }
+h1 {
+    font-size: var(--text-5xl);
+}
+
+h2 {
+    font-size: var(--text-4xl);
+}
+
+h3 {
+    font-size: var(--text-3xl);
+}
+
+h4 {
+    font-size: var(--text-2xl);
+}
+
+h5 {
+    font-size: var(--text-xl);
+}
+
+h6 {
+    font-size: var(--text-lg);
+}
 
 p {
     margin-bottom: var(--space-4);

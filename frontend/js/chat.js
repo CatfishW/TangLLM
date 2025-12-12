@@ -729,52 +729,79 @@ class ChatManager {
         if (!sidebarContent) return;
 
         sidebarContent.innerHTML = `
-            <button class="new-chat-btn" onclick="chatManager.createNewChat()">
-                <span>+</span> New Chat
-            </button>
+            <div style="padding: 0 var(--space-4);">
+                <button class="new-chat-btn" onclick="chatManager.createNewChat()">
+                    <span>+</span> New Chat
+                </button>
+            </div>
             
             <div class="conversation-list">
                 ${this.conversations.map(conv => `
-                    <button class="conversation-item ${this.currentConversation?.id === conv.id ? 'active' : ''}"
-                            onclick="chatManager.selectConversation(${conv.id})"
-                            oncontextmenu="chatManager.showContextMenu(event, ${conv.id})">
-                        <span class="conversation-item-icon">💬</span>
-                        <span class="conversation-item-title">${utils.escapeHtml(conv.title)}</span>
-                    </button>
+                    <div class="conversation-item-wrapper">
+                        <button class="conversation-item ${this.currentConversation?.id === conv.id ? 'active' : ''}"
+                                onclick="chatManager.selectConversation(${conv.id})">
+                            <span class="conversation-item-title">${utils.escapeHtml(conv.title)}</span>
+                        </button>
+                        <div class="conversation-menu dropdown">
+                            <button class="conversation-menu-btn" onclick="chatManager.toggleContextMenu(event, ${conv.id})">⋮</button>
+                            <div class="dropdown-menu" id="ctx-menu-${conv.id}">
+                                <button class="dropdown-item item-delete" onclick="chatManager.deleteConversation(${conv.id})">
+                                    <span class="icon">🗑️</span> Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 `).join('')}
             </div>
-        `;
 
-        // Close context menu on global click
-        document.addEventListener('click', () => this.hideContextMenu());
+            ${this.conversations.length > 0 ? `
+            <div style="margin-top: auto; padding: var(--space-4); border-top: 1px solid var(--color-border);">
+                <button class="btn-ghost btn-sm" onclick="chatManager.clearAllHistory()" style="width: 100%; color: var(--color-text-tertiary);">
+                    🗑️ Clear All History
+                </button>
+            </div>
+            ` : ''}
+        `;
     }
 
-    showContextMenu(event, conversationId) {
-        event.preventDefault();
-        this.hideContextMenu(); // Close any existing
+    toggleContextMenu(event, conversationId) {
+        event.stopPropagation();
+        // Close all other menus
+        document.querySelectorAll('.conversation-menu.active').forEach(el => {
+            if (el.querySelector(`#ctx-menu-${conversationId}`) === null) {
+                el.classList.remove('active');
+            }
+        });
 
-        const menu = document.createElement('div');
-        menu.id = 'context-menu';
-        menu.className = 'context-menu';
-        menu.innerHTML = `
-            <button class="context-menu-item item-delete" onclick="chatManager.deleteConversation(${conversationId})">
-                <span class="icon">🗑️</span> Delete Chat
-            </button>
-        `;
+        const btn = event.currentTarget;
+        const menuWrapper = btn.closest('.conversation-menu');
+        menuWrapper.classList.toggle('active');
 
-        // Position menu
-        menu.style.left = `${event.pageX}px`;
-        menu.style.top = `${event.pageY}px`;
+        // Global click handler to close menus
+        const closeHandler = (e) => {
+            if (!menuWrapper.contains(e.target)) {
+                menuWrapper.classList.remove('active');
+                document.removeEventListener('click', closeHandler);
+            }
+        };
 
-        document.body.appendChild(menu);
-
-        // slight animation
-        requestAnimationFrame(() => menu.classList.add('active'));
+        if (menuWrapper.classList.contains('active')) {
+            // Delay adding listener to avoid immediate trigger
+            setTimeout(() => document.addEventListener('click', closeHandler), 0);
+        }
     }
 
-    hideContextMenu() {
-        const menu = document.getElementById('context-menu');
-        if (menu) menu.remove();
+    async clearAllHistory() {
+        if (!confirm('Are you sure you want to delete ALL chat history? This cannot be undone.')) return;
+
+        try {
+            await api.deleteAllConversations();
+            await this.loadConversations();
+            this.createNewChat();
+            Toast.success('All history cleared');
+        } catch (error) {
+            Toast.error('Failed to clear history');
+        }
     }
 
     renderChat() {

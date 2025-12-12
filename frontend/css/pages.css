@@ -54,7 +54,6 @@
     align-items: center;
     justify-content: space-between;
     padding: var(--space-4);
-    border-bottom: 1px solid var(--color-border);
 }
 
 .sidebar-logo {
@@ -64,25 +63,27 @@
 }
 
 .sidebar-logo-icon {
-    width: 36px;
-    height: 36px;
-    background: linear-gradient(135deg, var(--color-gold-500), var(--color-brown-600));
-    border-radius: var(--radius-lg);
+    width: 32px;
+    height: 32px;
+    background: var(--color-text-primary);
+    color: var(--color-bg-primary);
+    border-radius: var(--radius-md);
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
 .sidebar-logo-text {
-    font-family: var(--font-serif);
+    font-family: var(--font-sans);
     font-size: var(--text-lg);
     font-weight: var(--font-bold);
+    letter-spacing: -0.02em;
 }
 
 .sidebar-content {
     flex: 1;
     overflow-y: auto;
-    padding: var(--space-4);
+    padding-top: var(--space-2);
 }
 
 .sidebar-footer {
@@ -97,40 +98,47 @@
     align-items: center;
     justify-content: center;
     gap: var(--space-2);
-    padding: var(--space-3);
+    padding: var(--space-2);
     margin-bottom: var(--space-4);
-    background: linear-gradient(135deg, rgba(255, 206, 0, 0.1), rgba(255, 206, 0, 0.05));
-    border: 1px solid rgba(255, 206, 0, 0.2);
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
-    color: var(--color-gold-400);
+    color: var(--color-text-primary);
     font-size: var(--text-sm);
     font-weight: var(--font-medium);
     cursor: pointer;
     transition: all var(--transition-fast);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .new-chat-btn:hover {
-    background: linear-gradient(135deg, var(--color-gold-500), var(--color-gold-600));
-    border-color: var(--color-gold-500);
-    color: var(--color-brown-900);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    background: var(--color-bg-tertiary);
+    border-color: var(--color-border-hover);
 }
 
 /* Conversation List */
 .conversation-list {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 1px;
 }
 
-.conversation-item {
+.conversation-item-wrapper {
     position: relative;
     display: flex;
     align-items: center;
+    padding: 0 var(--space-2);
+}
+
+.conversation-item-wrapper:hover {
+    background: var(--color-bg-tertiary);
+}
+
+.conversation-item {
+    flex: 1;
+    display: flex;
+    align-items: center;
     gap: var(--space-3);
-    padding: var(--space-2) var(--space-3);
+    padding: var(--space-2) var(--space-2);
     background: transparent;
     border: none;
     border-radius: var(--radius-md);
@@ -138,30 +146,24 @@
     font-size: var(--text-sm);
     text-align: left;
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: color var(--transition-fast);
     width: 100%;
-    height: 40px;
+    height: 36px;
+    overflow: hidden;
 }
 
 .conversation-item:hover {
-    background: var(--color-bg-tertiary);
     color: var(--color-text-primary);
 }
 
 .conversation-item.active {
-    background: var(--color-bg-elevated);
-    color: var(--color-gold-400);
+    color: var(--color-text-primary);
+    font-weight: var(--font-medium);
 }
 
+/* Remove old left icon */
 .conversation-item-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 20px;
-    flex-shrink: 0;
-    opacity: 0.7;
-    font-size: 1.1em;
+    display: none;
 }
 
 .conversation-item-title {
@@ -169,62 +171,40 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-
-    padding-right: var(--space-1);
 }
 
-/* Context Menu */
-.context-menu {
-    position: absolute;
-    min-width: 160px;
-    background: var(--color-bg-elevated);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-xl);
-    padding: var(--space-2);
-    z-index: var(--z-notification);
-    opacity: 0;
-    transform: scale(0.95);
-    transition: all 0.1s ease-out;
-    pointer-events: none;
-}
-
-.context-menu.active {
-    opacity: 1;
-    transform: scale(1);
-    pointer-events: auto;
-}
-
-.context-menu-item {
+/* Kebab Menu Button */
+.conversation-menu-btn {
+    width: 28px;
+    height: 28px;
     display: flex;
     align-items: center;
-    gap: var(--space-3);
-    width: 100%;
-    padding: var(--space-2) var(--space-3);
+    justify-content: center;
     border: none;
-    background: none;
-    color: var(--color-text-primary);
-    font-size: var(--text-sm);
-    text-align: left;
-    cursor: pointer;
+    background: transparent;
+    color: var(--color-text-secondary);
     border-radius: var(--radius-md);
+    cursor: pointer;
+    opacity: 0;
     transition: all var(--transition-fast);
 }
 
-.context-menu-item:hover {
-    background: var(--color-bg-tertiary);
+.conversation-item-wrapper:hover .conversation-menu-btn,
+.conversation-menu.active .conversation-menu-btn {
+    opacity: 1;
 }
 
-.context-menu-item.item-delete {
-    color: var(--color-error);
+.conversation-menu-btn:hover {
+    color: var(--color-text-primary);
+    background: var(--color-bg-elevated);
 }
 
-.context-menu-item.item-delete:hover {
-    background: rgba(239, 68, 68, 0.1);
-}
-
-.context-menu-item .icon {
-    font-size: 1.1em;
+/* Context Menu Position override for sidebar items */
+.conversation-menu .dropdown-menu {
+    top: 100%;
+    right: 0;
+    min-width: 140px;
+    transform-origin: top right;
 }
 
 /* User Profile in Sidebar */
@@ -232,15 +212,14 @@
     display: flex;
     align-items: center;
     gap: var(--space-3);
-    padding: var(--space-3);
-    background: var(--color-bg-tertiary);
+    padding: var(--space-2);
     border-radius: var(--radius-lg);
     cursor: pointer;
     transition: all var(--transition-fast);
 }
 
 .user-profile:hover {
-    background: var(--color-bg-elevated);
+    background: var(--color-bg-tertiary);
 }
 
 .user-info {
@@ -251,6 +230,7 @@
 .user-name {
     font-weight: var(--font-medium);
     font-size: var(--text-sm);
+    color: var(--color-text-primary);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -258,7 +238,7 @@
 
 .user-email {
     font-size: var(--text-xs);
-    color: var(--color-text-tertiary);
+    color: var(--color-text-muted);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1187,6 +1167,7 @@
 .app:not(.sidebar-collapsed) .toggle-sidebar-btn {
     left: calc(var(--sidebar-width) + var(--space-4));
 }
+
 /* Generated Images */
 .generated-image-container {
     display: grid;
@@ -1286,4 +1267,3 @@
     width: 100%;
     height: 36px;
 }
-

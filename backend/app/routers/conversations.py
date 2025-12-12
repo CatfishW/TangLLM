@@ -214,6 +214,32 @@ async def delete_conversation(
     return {"message": "Conversation deleted"}
 
 
+@router.delete("/")
+async def delete_all_conversations(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Delete all conversations for the current user."""
+    # Delete all messages first (cascade usually handles this, but explicit is safe)
+    # Actually, if we delete conversations, messages should cascade if FK is set up right
+    # Let's just delete conversations for this user
+    
+    result = await db.execute(
+        select(Conversation).filter(Conversation.user_id == current_user.id)
+    )
+    conversations = result.scalars().all()
+    
+    if not conversations:
+        return {"message": "No conversations to delete"}
+        
+    for conversation in conversations:
+        await db.delete(conversation)
+        
+    await db.commit()
+    
+    return {"message": "All conversations deleted"}
+
+
 @router.post("/{conversation_id}/branch", response_model=ConversationResponse)
 async def branch_conversation(
     conversation_id: int,

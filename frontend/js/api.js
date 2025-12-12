@@ -240,6 +240,12 @@ class APIClient {
         });
     }
 
+    async deleteAllConversations() {
+        return this.request('api/conversations/', {
+            method: 'DELETE'
+        });
+    }
+
     async branchConversation(conversationId, messageId, newTitle = null) {
         return this.request(`api/conversations/${conversationId}/branch`, {
             method: 'POST',
