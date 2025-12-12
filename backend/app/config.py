@@ -67,6 +67,10 @@ class Settings(BaseSettings):
     T2I_DEFAULT_HEIGHT: int = 1024
     T2I_DEFAULT_STEPS: int = 9
     
+    # Text-to-Speech API
+    TTS_API_BASE: str = "https://game.agaii.org/tts2"
+    TTS_DEFAULT_VOICE: str = "examples/prompt1.wav"
+
     # Server
     HOST: str = "0.0.0.0"
     PORT: int = 6666

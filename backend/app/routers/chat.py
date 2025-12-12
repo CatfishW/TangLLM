@@ -20,6 +20,7 @@ from ..services.llm_service import LLMService
 from ..services.auth_service import AuthService
 from ..services.annotation_service import AnnotationService
 from ..services.t2i_service import T2IService
+from ..services.tts_service import TTSService
 from ..utils.security import get_current_user
 from ..config import settings
 
@@ -165,8 +166,11 @@ async def send_message(
         "\n\nIf the user explicitly asks to generate, create, draw, or make an image/picture/photo, "
         "respond ONLY with the following format:\n"
         "[T2I_REQUEST: <detailed prompt for image generation>]\n\n"
-        "Enhance the user's request into a detailed, high-quality image generation prompt. "
-        "Do not provide any other text response."
+        "If the user explicitly asks to speak, say, read aloud, or generate audio/voice/speech, "
+        "respond ONLY with the following format:\n"
+        "[TTS_REQUEST: <text to speak>]\n\n"
+        "Enhance the user's request into a detailed, high-quality image generation prompt OR clean text to speak. "
+        "Do not provide any other text response for these specific requests."
     )
     
     if system_prompt:
@@ -246,51 +250,112 @@ async def send_message(
                     await asyncio.sleep(0)
                 
                 # End of stream processing
-                if marker_detected or (checking_for_marker and t2i_buffer.strip().startswith("[T2I_REQUEST:")):
-                    # Parse prompt from buffer
+                if marker_detected or (checking_for_marker and (t2i_buffer.strip().startswith("[T2I_REQUEST:") or t2i_buffer.strip().startswith("[TTS_REQUEST:"))):
                     full_param = t2i_buffer.strip()
-                    # Use string manipulation instead of regex to be more robust
-                    prefix = "[T2I_REQUEST:"
                     
-                    # Find start of prefix ignoring whitespace
-                    start_idx = full_param.find(prefix)
-                    if start_idx != -1:
-                        # Extract content after prefix
-                        content_after = full_param[start_idx + len(prefix):].strip()
-                        
-                        # Remove trailing ] if present
-                        if content_after.endswith("]"):
-                            content_after = content_after[:-1].strip()
-                        
-                        prompt = content_after
-                        
-                        if prompt:
-                            # Notify frontend
-                            progress_msg = f"Generating image for: **{prompt}**..."
-                            yield f"data: {json.dumps({'type': 'content', 'content': progress_msg})}\n\n"
+                    # --- T2I Handling ---
+                    if "[T2I_REQUEST:" in full_param:
+                        prefix = "[T2I_REQUEST:"
+                        start_idx = full_param.find(prefix)
+                        if start_idx != -1:
+                            content_after = full_param[start_idx + len(prefix):].strip()
+                            if content_after.endswith("]"): content_after = content_after[:-1].strip()
+                            prompt = content_after
                             
-                            # Call T2I Service (imported globally)
-                            t2i_service_inst = T2IService()
-                            result = await t2i_service_inst.generate_image(prompt, current_user.id)
-                            
-                            if result["success"]:
-                                # Send special image event
-                                yield f"data: {json.dumps({'type': 'image_generated', 'url': result['url'], 'prompt': prompt})}\n\n"
+                            if prompt:
+                                progress_msg = f"Generating image for: **{prompt}**..."
+                                yield f"data: {json.dumps({'type': 'content', 'content': progress_msg})}\n\n"
                                 
-                                # Final full_response for history
-                                full_response = f"Generated image for: {prompt}\n![{prompt}]({result['url']})"
+                                t2i_service_inst = T2IService()
+                                result = await t2i_service_inst.generate_image(prompt, current_user.id)
+                                
+                                if result["success"]:
+                                    yield f"data: {json.dumps({'type': 'image_generated', 'url': result['url'], 'prompt': prompt})}\n\n"
+                                    full_response = f"Generated image for: {prompt}\n![{prompt}]({result['url']})"
+                                else:
+                                    err_msg = f"\nFailed to generate image: {result.get('error')}"
+                                    yield f"data: {json.dumps({'type': 'content', 'content': err_msg})}\n\n"
+                                    full_response = f"Request: {prompt}\n{err_msg}"
                             else:
-                                err_msg = f"\nFailed to generate image: {result.get('error')}"
-                                yield f"data: {json.dumps({'type': 'content', 'content': err_msg})}\n\n"
-                                full_response = f"Request: {prompt}\n{err_msg}"
+                                yield f"data: {json.dumps({'type': 'content', 'content': t2i_buffer})}\n\n"
+                                full_response += t2i_buffer
                         else:
-                            # Empty prompt
                             yield f"data: {json.dumps({'type': 'content', 'content': t2i_buffer})}\n\n"
                             full_response += t2i_buffer
+
+                    # --- TTS Handling ---
+                    elif "[TTS_REQUEST:" in full_param:
+                        prefix = "[TTS_REQUEST:"
+                        start_idx = full_param.find(prefix)
+                        if start_idx != -1:
+                            content_after = full_param[start_idx + len(prefix):].strip()
+                            if content_after.endswith("]"): content_after = content_after[:-1].strip()
+                            tts_text = content_after
+                            
+                            if tts_text:
+                                progress_msg = f"Generating audio for: **{tts_text}**..."
+                                yield f"data: {json.dumps({'type': 'content', 'content': progress_msg})}\n\n"
+                                
+                                # Check for uploaded audio file to use as voice
+                                voice_path = None
+                                is_upload = False
+                                
+                                # Scan chat_request.content for media URLs if we want to determine voice
+                                # Currently we check if there was a file upload in the context
+                                # Since we don't have direct access to 'files' here easily unless we look at request content content list
+                                # We check content list for other items
+                                
+                                for item in chat_request.content:
+                                     # Assuming 'image' or 'video' - but we might have 'audio' if supported or treat video as audio source?
+                                     # The user prompt likely contained the audio reference
+                                     # For now, let's look for explicit patterns in tts_text if user said @[filename]?
+                                     # Or logic: check for 'audio' typed message content?
+                                     # Let's rely on backend file service path if we can find it?
+                                     pass
+                                
+                                # Actually, simply check if the user uploaded a file in this turn
+                                # The ChatRequest comes with list of content.
+                                # If any content item is a URL to /api/files/..., we can use it.
+                                # But we need to know if it's audio.
+                                # Let's peek at extensions in the URL.
+                                
+                                for item in chat_request.content:
+                                    if item.url and "/api/files/" in item.url:
+                                        ext = os.path.splitext(item.url)[1].lower()
+                                        if ext in ['.wav', '.mp3', '.m4a', '.ogg', '.flac']:
+                                            # Found audio file!
+                                            match = re.search(r'/api/files/(\d+)/([^/]+)$', item.url)
+                                            if match:
+                                                f_uid = match.group(1)
+                                                f_name = match.group(2)
+                                                file_path = os.path.join(settings.UPLOAD_DIR, f_uid, f_name)
+                                                if os.path.exists(file_path):
+                                                    voice_path = file_path
+                                                    is_upload = True
+                                                    break
+
+                                tts_service_inst = TTSService()
+                                result = await tts_service_inst.generate_speech(tts_text, current_user.id, voice_path, is_upload)
+                                
+                                if result["success"]:
+                                    yield f"data: {json.dumps({'type': 'audio_generated', 'url': result['url'], 'text': tts_text})}\n\n"
+                                    # Markdown audio player? Not standard. Use text link or message.
+                                    # We'll rely on frontend specific event to render player.
+                                    full_response = f"Generated audio for: {tts_text}\n[Audio]({result['url']})"
+                                else:
+                                    err_msg = f"\nFailed to generate audio: {result.get('error')}"
+                                    yield f"data: {json.dumps({'type': 'content', 'content': err_msg})}\n\n"
+                                    full_response = f"Request: {tts_text}\n{err_msg}"
+                            else:
+                                yield f"data: {json.dumps({'type': 'content', 'content': t2i_buffer})}\n\n"
+                                full_response += t2i_buffer
+                        else:
+                             yield f"data: {json.dumps({'type': 'content', 'content': t2i_buffer})}\n\n"
+                             full_response += t2i_buffer
+                    
                     else:
-                        # Malformed or not found
-                        yield f"data: {json.dumps({'type': 'content', 'content': t2i_buffer})}\n\n"
-                        full_response += t2i_buffer
+                         yield f"data: {json.dumps({'type': 'content', 'content': t2i_buffer})}\n\n"
+                         full_response += t2i_buffer
                         
                 elif t2i_buffer:
                     # Leftover buffer flush

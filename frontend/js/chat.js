@@ -308,6 +308,26 @@ class ChatManager {
                                             </div>
                                         `;
                                     }
+                                } else if (data.type === 'audio_generated') {
+                                    // Received generated audio
+                                    const grid = messageEl.querySelector('.generated-images-grid'); // Reusing grid container for now or create new
+                                    // Actually, audio should probably be inline or below
+                                    // Let's create a dedicated audio container if it doesn't exist
+                                    let audioFn = messageEl.querySelector('.audio-container');
+                                    if (!audioFn) {
+                                        audioFn = document.createElement('div');
+                                        audioFn.className = 'audio-container';
+                                        // Insert before actions
+                                        const actions = messageEl.querySelector('.message-actions');
+                                        messageEl.insertBefore(audioFn, actions);
+                                    }
+
+                                    audioFn.innerHTML += `
+                                        <div class="generated-audio-wrapper">
+                                            <div class="audio-label">🔊 ${data.text.length > 30 ? data.text.substring(0, 30) + '...' : data.text}</div>
+                                            <audio controls src="${data.url}" class="generated-audio"></audio>
+                                        </div>
+                                    `;
                                 } else if (data.type === 'done') {
                                     messageId = data.message_id;
                                     conversationId = data.conversation_id;
