@@ -62,6 +62,43 @@
     gap: var(--space-3);
 }
 
+.logo-badge {
+    background: white;
+    padding: 4px 8px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Avatar Styles */
+.avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-full);
+    background: var(--color-primary);
+    /* Use primary color which is usually brighter */
+    color: var(--color-bg-primary);
+    /* Dark text on bright background */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: var(--font-bold);
+    font-size: var(--text-sm);
+}
+
+.avatar-sm {
+    width: 32px;
+    height: 32px;
+    font-size: var(--text-sm);
+}
+
+.avatar-lg {
+    width: 64px;
+    height: 64px;
+    font-size: var(--text-xl);
+}
+
 .sidebar-logo-icon {
     width: 32px;
     height: 32px;

@@ -51,7 +51,9 @@ async function renderApp() {
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="sidebar-logo">
-                    <img src="assets/rowan-logo.png" alt="Rowan University" class="sidebar-logo-image" style="height: 32px; width: auto;">
+                    <div class="logo-badge">
+                        <img src="assets/rowan-logo.png" alt="Rowan University" class="sidebar-logo-image" style="height: 24px; width: auto;">
+                    </div>
                 </div>
             </div>
             
