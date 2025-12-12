@@ -137,9 +137,25 @@ class T2IService:
         filepath = os.path.join(user_dir, filename)
         
         # Decode and save
-        image_data = base64.b64decode(base64_data)
-        with open(filepath, "wb") as f:
-            f.write(image_data)
+        try:
+            # Clean up the base64 string
+            if "," in base64_data:
+                base64_data = base64_data.split(",")[1]
+            
+            # Remove any whitespace
+            base64_data = base64_data.strip()
+            
+            # Fix padding if needed
+            missing_padding = len(base64_data) % 4
+            if missing_padding:
+                base64_data += '=' * (4 - missing_padding)
+            
+            image_data = base64.b64decode(base64_data)
+            with open(filepath, "wb") as f:
+                f.write(image_data)
+        except Exception as e:
+            # Re-raise with more context
+            raise ValueError(f"Failed to decode base64 image: {str(e)}")
         
         # Return the API URL for accessing the file
         return f"/api/files/{user_id}/{filename}"
