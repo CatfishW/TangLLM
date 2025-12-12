@@ -19,6 +19,7 @@ from ..models.message import Message
 from ..services.llm_service import LLMService
 from ..services.auth_service import AuthService
 from ..services.annotation_service import AnnotationService
+from ..services.t2i_service import T2IService
 from ..utils.security import get_current_user
 from ..config import settings
 
@@ -159,6 +160,20 @@ async def send_message(
     temperature = float(user_settings.temperature) if user_settings else 0.7
     max_tokens = user_settings.max_tokens if user_settings else 4096
     
+    # Enhance system prompt for T2I intent detection
+    t2i_instruction = (
+        "\n\nIf the user explicitly asks to generate, create, draw, or make an image/picture/photo, "
+        "respond ONLY with the following format:\n"
+        "[T2I_REQUEST: <detailed prompt for image generation>]\n\n"
+        "Enhance the user's request into a detailed, high-quality image generation prompt. "
+        "Do not provide any other text response."
+    )
+    
+    if system_prompt:
+        system_prompt += t2i_instruction
+    else:
+        system_prompt = "You are a helpful assistant." + t2i_instruction
+    
     # Get thinking mode from user settings
     thinking_mode = getattr(user_settings, 'thinking_mode', 'auto') if user_settings else 'auto'
     
@@ -176,6 +191,11 @@ async def send_message(
         async def generate():
             full_response = ""
             
+            # T2I Buffering variables
+            t2i_buffer = ""
+            checking_for_marker = True
+            marker_detected = False
+            
             try:
                 async for chunk in llm_service.chat_stream(
                     conversation_history,
@@ -185,10 +205,83 @@ async def send_message(
                     max_tokens=max_tokens,
                     enable_thinking=enable_thinking
                 ):
-                    full_response += chunk
-                    yield f"data: {json.dumps({'type': 'content', 'content': chunk})}\n\n"
-                    # Force yield to event loop to ensure smoother streaming
+                    # Check for thinking blocks first
+                    if "<think>" in chunk or "</think>" in chunk:
+                         full_response += chunk
+                         yield f"data: {json.dumps({'type': 'content', 'content': chunk})}\n\n"
+                         
+                         # Parse thinking mode disable - if we see thinking tags, disable T2I check
+                         if checking_for_marker:
+                             checking_for_marker = False
+                             if t2i_buffer:
+                                 yield f"data: {json.dumps({'type': 'content', 'content': t2i_buffer})}\n\n"
+                                 full_response += t2i_buffer
+                                 t2i_buffer = ""
+                         continue
+
+                    # If we are checking for marker
+                    if checking_for_marker:
+                        t2i_buffer += chunk
+                        clean_buffer = t2i_buffer.lstrip()
+                        
+                        # Check start
+                        if clean_buffer.startswith("[T2I_REQUEST:"):
+                            marker_detected = True
+                            checking_for_marker = False # Switch to capture mode
+                        # If buffer is long enough and doesn't start with marker prefix
+                        elif len(clean_buffer) > 20 and not "[T2I_REQUEST:".startswith(clean_buffer[:10]):
+                            # Flush buffer
+                            yield f"data: {json.dumps({'type': 'content', 'content': t2i_buffer})}\n\n"
+                            full_response += t2i_buffer
+                            t2i_buffer = ""
+                            checking_for_marker = False
+                        # Else continue buffering
+                    elif marker_detected:
+                        t2i_buffer += chunk # Accumulate prompt
+                    else:
+                        # Normal streaming
+                        full_response += chunk
+                        yield f"data: {json.dumps({'type': 'content', 'content': chunk})}\n\n"
+                    
                     await asyncio.sleep(0)
+                
+                # End of stream processing
+                if marker_detected or (checking_for_marker and t2i_buffer.strip().startswith("[T2I_REQUEST:")):
+                    # Parse prompt from buffer
+                    full_param = t2i_buffer.strip()
+                    match = re.search(r'\[T2I_REQUEST:\s*(.*?)\]?', full_param, re.DOTALL)
+                    
+                    if match:
+                        prompt = match.group(1).strip()
+                        if prompt.endswith(']'): prompt = prompt[:-1]
+                        
+                        # Notify frontend
+                        progress_msg = f"Generating image for: **{prompt}**..."
+                        yield f"data: {json.dumps({'type': 'content', 'content': progress_msg})}\n\n"
+                        
+                        # Call T2I Service (imported globally)
+                        t2i_service_inst = T2IService()
+                        result = await t2i_service_inst.generate_image(prompt, current_user.id)
+                        
+                        if result["success"]:
+                            # Send special image event
+                            yield f"data: {json.dumps({'type': 'image_generated', 'url': result['url'], 'prompt': prompt})}\n\n"
+                            
+                            # Final full_response for history
+                            full_response = f"Generated image for: {prompt}\n![{prompt}]({result['url']})"
+                        else:
+                            err_msg = f"\nFailed to generate image: {result.get('error')}"
+                            yield f"data: {json.dumps({'type': 'content', 'content': err_msg})}\n\n"
+                            full_response = f"Request: {prompt}\n{err_msg}"
+                    else:
+                        # Malformed
+                        yield f"data: {json.dumps({'type': 'content', 'content': t2i_buffer})}\n\n"
+                        full_response += t2i_buffer
+                        
+                elif t2i_buffer:
+                    # Leftover buffer flush
+                    yield f"data: {json.dumps({'type': 'content', 'content': t2i_buffer})}\n\n"
+                    full_response += t2i_buffer
                 
                 # Save assistant message
                 assistant_message = Message(

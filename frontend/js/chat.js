@@ -295,6 +295,19 @@ class ChatManager {
                                 } else if (data.type === 'annotation') {
                                     // Received annotated detection image
                                     annotationUrl = data.url;
+                                } else if (data.type === 'image_generated') {
+                                    // Received generated image
+                                    const grid = messageEl.querySelector('.generated-images-grid');
+                                    if (grid) {
+                                        grid.innerHTML += `
+                                            <div class="generated-image-wrapper">
+                                                <img src="${data.url}" alt="${data.prompt}" class="generated-image" onclick="window.open('${data.url}', '_blank')">
+                                                <div class="image-actions-overlay">
+                                                    <a href="${data.url}" download class="image-overlay-btn" title="Download">⬇</a>
+                                                </div>
+                                            </div>
+                                        `;
+                                    }
                                 } else if (data.type === 'done') {
                                     messageId = data.message_id;
                                     conversationId = data.conversation_id;
@@ -428,6 +441,7 @@ class ChatManager {
             <div class="message-content">
                 ${mediaHtml}
                 <div class="message-text">${text ? utils.parseMarkdown(text) : ''}</div>
+                <div class="generated-images-grid"></div>
                 <div class="message-actions">
                     <button class="message-action-btn" onclick="chatManager.copyMessage(this)" title="Copy">
                         📋 Copy

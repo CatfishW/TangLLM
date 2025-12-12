@@ -61,6 +61,12 @@ class Settings(BaseSettings):
     ALLOWED_IMAGE_TYPES: list = ["image/jpeg", "image/png", "image/gif", "image/webp"]
     ALLOWED_VIDEO_TYPES: list = ["video/mp4", "video/webm", "video/quicktime"]
     
+    # Text-to-Image API
+    T2I_API_BASE: str = "https://game.agaii.org/t2i"
+    T2I_DEFAULT_WIDTH: int = 1024
+    T2I_DEFAULT_HEIGHT: int = 1024
+    T2I_DEFAULT_STEPS: int = 9
+    
     # Server
     HOST: str = "0.0.0.0"
     PORT: int = 6666
