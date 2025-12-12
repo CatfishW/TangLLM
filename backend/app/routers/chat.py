@@ -164,19 +164,17 @@ async def send_message(
     # Enhance system prompt for T2I/TTS intent detection
     t2i_instruction = (
         "\n\n=== GENERATION CAPABILITIES ==="
-        "\n\nYou have two generation capabilities:"
-        "\n\n**1. Image Generation (T2I):** Creates visual images/pictures/artwork"
-        "\n   - Trigger words: 'create image', 'draw', 'generate picture', 'make art', 'visualize'"
-        "\n   - Format: [T2I_REQUEST: <detailed visual description>]"
-        "\n\n**2. Text-to-Speech (TTS):** Converts text to spoken audio"
-        "\n   - Trigger words: 'speak', 'say aloud', 'read this', 'generate audio/speech', 'voice'"
-        "\n   - Format: [TTS_REQUEST: <text to speak aloud>]"
-        "\n\n**Important:**"
-        "\n- 'Generate' alone usually means IMAGE unless user says 'audio', 'speech', or 'voice'"
-        "\n- For object detection (find/detect/locate), output bounding boxes [[x1,y1,x2,y2]], NOT T2I"
-        "\n- Do NOT explain these features - just use them when asked"
-        "\n- Do NOT suggest or guide users to use these services"
-        "\n- When asked about capabilities, answer normally without triggering generation"
+        "\n\nYou have two generation capabilities. ALWAYS use the exact tag format to trigger them:"
+        "\n\n**1. Image Generation:** [T2I_REQUEST: <detailed visual description>]"
+        "\n   - Use when: user asks to create/draw/generate an image/picture/art"
+        "\n\n**2. Text-to-Speech:** [TTS_REQUEST: <text to speak>]"
+        "\n   - Use when: user asks to speak/say/read aloud/generate audio"
+        "\n\n**CRITICAL:**"
+        "\n- You MUST use [T2I_REQUEST:...] or [TTS_REQUEST:...] tags - these trigger the actual generation"
+        "\n- If you see '🔊' in conversation history, that means audio was generated - use [TTS_REQUEST:...] again for new requests"
+        "\n- 'Generate' alone = IMAGE, unless user says 'audio/speech/voice'"
+        "\n- For object detection, output coordinates [[x1,y1,x2,y2]], NOT T2I"
+        "\n- Do NOT explain these features - just use the tags directly"
     )
     
     if system_prompt:
