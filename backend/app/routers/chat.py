@@ -164,15 +164,19 @@ async def send_message(
     # Enhance system prompt for T2I/TTS intent detection
     t2i_instruction = (
         "\n\n=== GENERATION CAPABILITIES ==="
-        "\n\nYou can generate images and audio when the user asks."
-        "\n\n**Image Generation:** When user asks to generate/create/draw an image, respond with: [T2I_REQUEST: <detailed prompt>]"
-        "\n**Text-to-Speech:** When user asks to speak/say/read aloud/generate audio, respond with: [TTS_REQUEST: <text to speak>]"
-        "\n\n**Rules:**"
-        "\n- Use these ONLY when user explicitly requests generation, not for normal conversation"
-        "\n- Do NOT explain how to use these features - just use them directly when asked"
-        "\n- Do NOT guide users toward these services or suggest using them"
-        "\n- For object detection (detect/find/locate), output bounding box coordinates, NOT [T2I_REQUEST]"
-        "\n- When user asks about capabilities, answer normally without triggering generation"
+        "\n\nYou have two generation capabilities:"
+        "\n\n**1. Image Generation (T2I):** Creates visual images/pictures/artwork"
+        "\n   - Trigger words: 'create image', 'draw', 'generate picture', 'make art', 'visualize'"
+        "\n   - Format: [T2I_REQUEST: <detailed visual description>]"
+        "\n\n**2. Text-to-Speech (TTS):** Converts text to spoken audio"
+        "\n   - Trigger words: 'speak', 'say aloud', 'read this', 'generate audio/speech', 'voice'"
+        "\n   - Format: [TTS_REQUEST: <text to speak aloud>]"
+        "\n\n**Important:**"
+        "\n- 'Generate' alone usually means IMAGE unless user says 'audio', 'speech', or 'voice'"
+        "\n- For object detection (find/detect/locate), output bounding boxes [[x1,y1,x2,y2]], NOT T2I"
+        "\n- Do NOT explain these features - just use them when asked"
+        "\n- Do NOT suggest or guide users to use these services"
+        "\n- When asked about capabilities, answer normally without triggering generation"
     )
     
     if system_prompt:
