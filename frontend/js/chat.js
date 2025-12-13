@@ -334,6 +334,26 @@ class ChatManager {
                                             </div>
                                         `;
                                     } catch (e) { console.error("Audio render error:", e); }
+                                } else if (data.type === 'image_upscaled') {
+                                    // Super Resolution upscaled image - show before/after comparison
+                                    try {
+                                        let srContainer = messageEl.querySelector('.sr-comparison-container');
+                                        if (!srContainer) {
+                                            srContainer = document.createElement('div');
+                                            srContainer.className = 'sr-comparison-container';
+
+                                            const actions = messageEl.querySelector('.message-actions');
+                                            if (actions && actions.parentNode) {
+                                                actions.parentNode.insertBefore(srContainer, actions);
+                                            } else {
+                                                const contentWrapper = messageEl.querySelector('.message-text')?.parentNode || messageEl;
+                                                contentWrapper.appendChild(srContainer);
+                                            }
+                                        }
+
+                                        srContainer.innerHTML = this.renderImageComparison(data.original_url, data.upscaled_url);
+                                        this.initImageComparisonSlider(srContainer);
+                                    } catch (e) { console.error("SR comparison render error:", e); }
                                 } else if (data.type === 'done') {
                                     messageId = data.message_id;
                                     conversationId = data.conversation_id;
@@ -1176,6 +1196,132 @@ class ChatManager {
 
     getThinkingMode() {
         return settingsManager.settings?.thinking_mode || localStorage.getItem('thinkingMode') || 'auto';
+    }
+
+    // ============= Super Resolution Image Comparison =============
+
+    renderImageComparison(originalUrl, upscaledUrl) {
+        return `
+            <div class="sr-comparison-header">
+                <span class="sr-comparison-icon">✨</span>
+                <span class="sr-comparison-label">Super Resolution (4x Upscale)</span>
+            </div>
+            <div class="image-comparison-slider">
+                <div class="comparison-image-container">
+                    <img src="${upscaledUrl}" alt="Upscaled image" class="comparison-image-after">
+                    <div class="comparison-image-before-wrapper">
+                        <img src="${originalUrl}" alt="Original image" class="comparison-image-before">
+                    </div>
+                    <div class="comparison-slider-handle">
+                        <div class="slider-line"></div>
+                        <div class="slider-button">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="15 18 9 12 15 6"></polyline>
+                            </svg>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="comparison-labels">
+                    <span class="label-before">Original</span>
+                    <span class="label-after">Enhanced (4x)</span>
+                </div>
+            </div>
+            <div class="sr-download-actions">
+                <a href="${originalUrl}" download class="sr-download-btn">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Original
+                </a>
+                <a href="${upscaledUrl}" download class="sr-download-btn sr-download-btn-primary">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Enhanced
+                </a>
+            </div>
+        `;
+    }
+
+    initImageComparisonSlider(container) {
+        const slider = container.querySelector('.image-comparison-slider');
+        if (!slider) return;
+
+        const handle = slider.querySelector('.comparison-slider-handle');
+        const beforeWrapper = slider.querySelector('.comparison-image-before-wrapper');
+        const imageContainer = slider.querySelector('.comparison-image-container');
+
+        if (!handle || !beforeWrapper || !imageContainer) return;
+
+        let isDragging = false;
+
+        const updateSliderPosition = (x) => {
+            const rect = imageContainer.getBoundingClientRect();
+            let percentage = ((x - rect.left) / rect.width) * 100;
+            percentage = Math.max(0, Math.min(100, percentage));
+
+            beforeWrapper.style.width = `${percentage}%`;
+            handle.style.left = `${percentage}%`;
+        };
+
+        const onMouseDown = (e) => {
+            e.preventDefault();
+            isDragging = true;
+            handle.classList.add('active');
+        };
+
+        const onMouseMove = (e) => {
+            if (!isDragging) return;
+            updateSliderPosition(e.clientX);
+        };
+
+        const onMouseUp = () => {
+            isDragging = false;
+            handle.classList.remove('active');
+        };
+
+        const onTouchStart = (e) => {
+            isDragging = true;
+            handle.classList.add('active');
+        };
+
+        const onTouchMove = (e) => {
+            if (!isDragging) return;
+            const touch = e.touches[0];
+            updateSliderPosition(touch.clientX);
+        };
+
+        const onTouchEnd = () => {
+            isDragging = false;
+            handle.classList.remove('active');
+        };
+
+        // Mouse events
+        handle.addEventListener('mousedown', onMouseDown);
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+
+        // Touch events
+        handle.addEventListener('touchstart', onTouchStart);
+        document.addEventListener('touchmove', onTouchMove);
+        document.addEventListener('touchend', onTouchEnd);
+
+        // Click on image container to move slider
+        imageContainer.addEventListener('click', (e) => {
+            if (e.target === handle || handle.contains(e.target)) return;
+            updateSliderPosition(e.clientX);
+        });
+
+        // Initialize at 50%
+        beforeWrapper.style.width = '50%';
+        handle.style.left = '50%';
     }
 }
 

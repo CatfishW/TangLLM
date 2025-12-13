@@ -21,6 +21,7 @@ from ..services.auth_service import AuthService
 from ..services.annotation_service import AnnotationService
 from ..services.t2i_service import T2IService
 from ..services.tts_service import TTSService
+from ..services.sr_service import SRService
 from ..utils.security import get_current_user
 from ..config import settings
 
@@ -174,6 +175,9 @@ async def send_message(
         '[{"label": "category_name", "bbox": [x1, y1, x2, y2]}, ...] for each object found. '
         "Each bbox uses normalized coordinates (0-1000). Include ALL detected instances of the requested categories. "
         "Do NOT use [T2I_REQUEST] for detection tasks.\n\n"
+        "If and ONLY IF the user explicitly asks to UPSCALE, ENHANCE RESOLUTION, SUPER-RESOLVE, or make an image HIGHER RESOLUTION, "
+        "respond ONLY with the following format:\n"
+        "[SR_REQUEST: upscale]\n\n"
         "If the user provides feedback/critique (e.g. 'not enough', 'missed some', 'bad quality'), "
         "respond by fixing the previous task (e.g. finding more objects) or asking for clarification. "
         "DO NOT generate a new image unless explicitly asked.\n\n"
@@ -181,7 +185,7 @@ async def send_message(
         "respond normally with text and DO NOT use the tags above.\n"
         "Enhance the user's request into a detailed, high-quality image generation prompt OR clean text to speak ONLY when the intent is clearly a generation request.\n"
         "IMPORTANT: You CANNOT generate audio or images directly. NEVER output '[Audio](...)' or '![Image](...)' links yourself. "
-        "ALWAYS use the [T2I_REQUEST: ...] or [TTS_REQUEST: ...] tags to trigger the generation."
+        "ALWAYS use the [T2I_REQUEST: ...], [TTS_REQUEST: ...], or [SR_REQUEST: ...] tags to trigger the generation."
     )
     
     if system_prompt:
@@ -249,7 +253,7 @@ async def send_message(
                     # We should flush if the buffer gets too long without a marker, OR if it clearly doesn't validly start with one
                     # But we must be careful not to split [T2...
                     
-                    has_marker = "[T2I_REQUEST:" in t2i_buffer or "[TTS_REQUEST:" in t2i_buffer or "[Text to speak:" in t2i_buffer
+                    has_marker = "[T2I_REQUEST:" in t2i_buffer or "[TTS_REQUEST:" in t2i_buffer or "[Text to speak:" in t2i_buffer or "[SR_REQUEST:" in t2i_buffer
                     
                     if has_marker:
                         # We have a confirmed marker! Keep buffering until we find the closing bracket ]
@@ -376,10 +380,61 @@ async def send_message(
                                 else:
                                     yield f"data: {json.dumps({'type': 'content', 'content': t2i_buffer})}\n\n"
                                     full_response += t2i_buffer
+                            
+                            # --- SR (Super Resolution) Handling ---
+                            elif "[SR_REQUEST:" in full_param:
+                                start_idx = full_param.find("[SR_REQUEST:")
+                                if start_idx != -1:
+                                    # Find image to upscale from conversation context
+                                    sr_image_path = None
+                                    sr_image_url = None
+                                    
+                                    # First check annotation_media_url (current image in context)
+                                    if annotation_media_type == "image" and annotation_media_url:
+                                        if "/api/files/" in annotation_media_url:
+                                            match = re.search(r'/api/files/(\d+)/([^/]+)$', annotation_media_url)
+                                            if match:
+                                                f_uid = match.group(1)
+                                                f_name = match.group(2)
+                                                file_path = os.path.join(settings.UPLOAD_DIR, f_uid, f_name)
+                                                if os.path.exists(file_path):
+                                                    sr_image_path = file_path
+                                                    sr_image_url = annotation_media_url
+                                    
+                                    if sr_image_path:
+                                        # Send progress update
+                                        progress_msg = f"Upscaling image (4x Super Resolution)..."
+                                        yield f"data: {json.dumps({'type': 'content', 'content': progress_msg})}\n\n"
+                                        
+                                        # Call SR Service
+                                        sr_service_inst = SRService()
+                                        try:
+                                            result = await sr_service_inst.upscale_image(sr_image_path, current_user.id)
+                                            
+                                            if result["success"]:
+                                                yield f"data: {json.dumps({'type': 'image_upscaled', 'original_url': result['original_url'], 'upscaled_url': result['upscaled_url']})}\n\n"
+                                                full_response = f"Image upscaled successfully!\n\nOriginal: {result['original_url']}\nUpscaled (4x): {result['upscaled_url']}"
+                                            else:
+                                                err_msg = f"\n\nError upscaling image: {result.get('error')}"
+                                                yield f"data: {json.dumps({'type': 'content', 'content': err_msg})}\n\n"
+                                                full_response = f"Failed to upscale image: {result.get('error')}"
+                                                
+                                        except Exception as e:
+                                            err_msg = f"\n\nError upscaling image: {str(e)}"
+                                            yield f"data: {json.dumps({'type': 'content', 'content': err_msg})}\n\n"
+                                            full_response = f"Failed to upscale: {str(e)}"
+                                    else:
+                                        err_msg = "\n\nNo image found in conversation to upscale. Please upload an image first."
+                                        yield f"data: {json.dumps({'type': 'content', 'content': err_msg})}\n\n"
+                                        full_response = err_msg
+                                else:
+                                    yield f"data: {json.dumps({'type': 'content', 'content': t2i_buffer})}\n\n"
+                                    full_response += t2i_buffer
+                            
                             else:
                                  yield f"data: {json.dumps({'type': 'content', 'content': t2i_buffer})}\n\n"
                                  full_response += t2i_buffer
-                        elif len(t2i_buffer) > 20 and not (t2i_buffer.strip().startswith("[T2I_REQUEST:") or t2i_buffer.strip().startswith("[TTS_REQUEST:") or t2i_buffer.strip().startswith("[Text to speak:")):
+                        elif len(t2i_buffer) > 20 and not (t2i_buffer.strip().startswith("[T2I_REQUEST:") or t2i_buffer.strip().startswith("[TTS_REQUEST:") or t2i_buffer.strip().startswith("[Text to speak:") or t2i_buffer.strip().startswith("[SR_REQUEST:")):
                             # Not a valid marker start
                              yield f"data: {json.dumps({'type': 'content', 'content': t2i_buffer})}\n\n"
                              full_response += t2i_buffer

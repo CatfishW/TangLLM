@@ -71,6 +71,9 @@ class Settings(BaseSettings):
     # Text-to-Speech API
     TTS_API_BASE: str = "https://game.agaii.org/tts2"
     TTS_DEFAULT_VOICE: str = "examples/prompt1.wav"
+    
+    # Super Resolution API
+    SR_API_BASE: str = "https://game.agaii.org/sr"
 
     # Server
     HOST: str = "0.0.0.0"
