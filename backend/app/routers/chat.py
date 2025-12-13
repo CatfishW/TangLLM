@@ -426,6 +426,10 @@ async def send_message(
                                         err_msg = "\n\nNo image found in conversation to upscale. Please upload an image first."
                                         yield f"data: {json.dumps({'type': 'content', 'content': err_msg})}\n\n"
                                         full_response = err_msg
+                                    
+                                    # Clear buffer and stop checking for markers after SR processing
+                                    t2i_buffer = ""
+                                    checking_for_marker = False
                                 else:
                                     yield f"data: {json.dumps({'type': 'content', 'content': t2i_buffer})}\n\n"
                                     full_response += t2i_buffer
