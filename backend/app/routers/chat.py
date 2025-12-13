@@ -281,7 +281,6 @@ async def send_message(
                                              if "/api/files/" in annotation_media_url:
                                                 # Extract local path from URL
                                                 # URL format: .../api/files/{user_id}/{filename}
-                                                import re
                                                 match = re.search(r'/api/files/(\d+)/([^/]+)$', annotation_media_url)
                                                 if match:
                                                     f_uid = match.group(1)
