@@ -185,7 +185,9 @@ async def send_message(
         "respond normally with text and DO NOT use the tags above.\n"
         "Enhance the user's request into a detailed, high-quality image generation prompt OR clean text to speak ONLY when the intent is clearly a generation request.\n"
         "IMPORTANT: You CANNOT generate audio or images directly. NEVER output '[Audio](...)' or '![Image](...)' links yourself. "
-        "ALWAYS use the [T2I_REQUEST: ...], [TTS_REQUEST: ...], or [SR_REQUEST: ...] tags to trigger the generation."
+        "ALWAYS use the [T2I_REQUEST: ...], [TTS_REQUEST: ...], or [SR_REQUEST: ...] tags to trigger the generation.\n"
+        "CRITICAL: Generate ONLY ONE [T2I_REQUEST], [TTS_REQUEST], or [SR_REQUEST] per response. NEVER generate multiple images or audio in a single response. "
+        "If asked for multiple items, choose the most important one or ask the user which one they want."
     )
     
     if system_prompt:
@@ -213,6 +215,11 @@ async def send_message(
             # T2I Buffering variables
             t2i_buffer = ""
             checking_for_marker = True
+            
+            # Flags to prevent multiple generations per response
+            image_generated = False
+            audio_generated = False
+            sr_generated = False
             
             try:
                 async for chunk in llm_service.chat_stream(
@@ -265,6 +272,11 @@ async def send_message(
                             if "[T2I_REQUEST:" in full_param:
                                 start_idx = full_param.find("[T2I_REQUEST:")
                                 if start_idx != -1:
+                                    # Skip if image was already generated in this response
+                                    if image_generated:
+                                        t2i_buffer = ""
+                                        continue
+                                    
                                     prompt = full_param[start_idx + 13:].strip()
                                     if prompt.endswith("]"): prompt = prompt[:-1].strip()
                                     
@@ -301,6 +313,9 @@ async def send_message(
                                         yield f"data: {json.dumps({'type': 'image_generated', 'url': result['url'], 'prompt': prompt})}\n\n"
                                         full_response = f"Generated image for: {prompt}\n![{prompt}]({result['url']})"
                                         
+                                        # Mark image as generated to prevent duplicates
+                                        image_generated = True
+                                        
                                     except Exception as e:
                                         err_msg = f"\n\nError generating image: {str(e)}"
                                         yield f"data: {json.dumps({'type': 'content', 'content': err_msg})}\n\n"
@@ -319,6 +334,11 @@ async def send_message(
                                     
                                 start_idx = full_param.find(prefix)
                                 if start_idx != -1:
+                                    # Skip if audio was already generated in this response
+                                    if audio_generated:
+                                        t2i_buffer = ""
+                                        continue
+                                    
                                     content_after = full_param[start_idx + len(prefix):].strip()
                                     if content_after.endswith("]"): content_after = content_after[:-1].strip()
                                     tts_text = content_after
@@ -372,6 +392,9 @@ async def send_message(
                                         # Markdown audio player? Not standard. Use text link or message.
                                         # We'll rely on frontend specific event to render player.
                                         full_response = f"Generated audio for: {tts_text}\n[Audio]({result['url']})"
+                                        
+                                        # Mark audio as generated to prevent duplicates
+                                        audio_generated = True
                                     else:
                                         err_msg = f"\nFailed to generate audio: {result.get('error')}"
                                         yield f"data: {json.dumps({'type': 'content', 'content': err_msg})}\n\n"
@@ -384,6 +407,11 @@ async def send_message(
                             elif "[SR_REQUEST:" in full_param:
                                 start_idx = full_param.find("[SR_REQUEST:")
                                 if start_idx != -1:
+                                    # Skip if SR was already performed in this response
+                                    if sr_generated:
+                                        t2i_buffer = ""
+                                        continue
+                                    
                                     # Find image to upscale from conversation context
                                     sr_image_path = None
                                     sr_image_url = None
@@ -413,6 +441,9 @@ async def send_message(
                                             if result["success"]:
                                                 yield f"data: {json.dumps({'type': 'image_upscaled', 'original_url': result['original_url'], 'upscaled_url': result['upscaled_url']})}\n\n"
                                                 full_response = f"Image upscaled successfully!\n\nOriginal: {result['original_url']}\nUpscaled (4x): {result['upscaled_url']}"
+                                                
+                                                # Mark SR as done to prevent duplicates
+                                                sr_generated = True
                                             else:
                                                 err_msg = f"\n\nError upscaling image: {result.get('error')}"
                                                 yield f"data: {json.dumps({'type': 'content', 'content': err_msg})}\n\n"
